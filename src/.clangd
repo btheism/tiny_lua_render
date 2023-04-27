@@ -1,0 +1,4 @@
+#为clangd LSP设置头文件目录,注意,-I的相对路径应该相对被编译的源文件,不是相对.clangd文件
+CompileFlags:
+  Add: ["-I../../lib/header/"]
+

@@ -1,0 +1,15 @@
+键盘回调函数:
+每个按键会产生事件,glfw会把事件缓存起来,每个事件都会触发一次回调,在linux的x11上,仅当调用glfwpollevents时(也许waitevent也可以?),glfw会依次处理缓存的事件,后来的事件不会覆盖前面的事件
+注意:
+当多个键被同时按下时,键盘只会汇报最后一个键的repeat事件,当最后一个按下的键被release时,即使其他键仍被按下,键盘也不会汇报这些键的repeat事件
+
+
+键盘查询函数:
+该模式不支持repeat事件
+sticky模式:
+当键盘收到某个键的press或repeat事件且该键处于release状态时,会把该键设为press状态,后续事件不会影响该键的状态,当调用getkey函数时,该键的状态会被重置为getkey函数且此前收到的最后一个事件(press/repeat事件->press, release事件->release).
+
+普通模式:
+返回键盘最后一次的状态,即键盘上一次汇报的是press或continue时,则返回press,上一次汇报的是release时,则返回release。该模式的缺陷在于如果轮询的间隔过长,可能会错过中途的按键状态
+
+回调函数实现起来较为繁琐(需要从C调用lua函数),因此我只包装了查询函数
