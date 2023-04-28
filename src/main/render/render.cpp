@@ -8,7 +8,7 @@ namespace fs = std::filesystem;
 #include <tiny_shader.hpp>
 #include <tiny_texture.hpp>
 #include <tiny_mesh.hpp>
-//#include <tiny_glm.hpp>
+#include <tiny_matrix.hpp>
 
 void load_resource(char *argv[]){
     static const std::vector<std::string> resources = {"script", "image", "sound", "model", "shader"};
@@ -100,6 +100,7 @@ int main(int argc, char * argv[])
     luaopen_tiny_shaderlib(L);
     luaopen_tiny_texturelib(L);
     luaopen_tiny_meshlib(L);
+    luaopen_tiny_matrixlib(L);
     //luaopen_tiny_glmlib(L);
 
     int lua_exec_state = luaL_loadbuffer(conf_L, script_buffer.content, script_buffer.len, "script/main.lua") || lua_pcall(conf_L, 0, LUA_MULTRET, 0);;

@@ -1,4 +1,3 @@
-#include<common.hpp>
 #include<tiny_mesh.hpp>
 
 mesh::mesh(GLenum type, GLsizei count, const std::vector<float>& vbo_data, const std::vector<VAO_par>& vas):type(type), count(count), VAO(0), VBO(0), EBO(0){

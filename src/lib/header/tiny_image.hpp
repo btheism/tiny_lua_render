@@ -1,6 +1,6 @@
 #ifndef __TINY_IMAGE
 #define __TINY_IMAGE
-#include<string>
+#include<tiny_common.hpp>
 class image_8bit{
 public:
     unsigned char * content;

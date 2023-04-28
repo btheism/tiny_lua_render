@@ -1,7 +1,8 @@
 #ifndef __TINY_WINDOW
 #define __TINY_WINDOW
 
-#include<tiny_common.hpp>
+#include <tiny_common.hpp>
+#include <tiny_image.hpp>
 void init(const char* window_title, int window_width, int window_height);
 void init(const char* window_title, const char* window_icon_path, int window_width, int window_height);
 void clean(void);

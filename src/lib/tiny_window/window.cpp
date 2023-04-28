@@ -1,8 +1,4 @@
 #include<tiny_window.hpp>
-#include<common.hpp>
-#include<GLFW/glfw3.h>
-#include<tiny_image.hpp>
-#include<tiny_window.hpp>
 
 //全局变量,指向当前窗口
 static GLFWwindow* window = NULL;

@@ -20,7 +20,7 @@ LIB_BIN_DIR_FOR_LINK :=$(realpath $(LIB_BIN_DIR))
 #lists of library that belongs to this project
 NVCC_LIBRARY :=
 C_LIBRARY := glad
-CPP_LIBRARY := tiny_window tiny_shader tiny_texture tiny_mesh tiny_image tiny_common
+CPP_LIBRARY := tiny_window tiny_shader tiny_texture tiny_mesh tiny_image tiny_matrix tiny_common
 
 #libraries that are already installed in system
 SYSTEM_NVCC_LIBRARY :=

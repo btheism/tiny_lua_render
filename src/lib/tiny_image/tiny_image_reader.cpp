@@ -1,7 +1,6 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include<stb/stb_image.h>
 #include<tiny_image.hpp>
-#include<common.hpp>
 
 void set_image_flip(bool value){
     stbi_set_flip_vertically_on_load_thread(value);
