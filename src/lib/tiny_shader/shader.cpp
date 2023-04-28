@@ -1,4 +1,5 @@
 #include <tiny_shader.hpp>
+#include <tiny_linear.hpp>
 
 shader* shader_from_file(const char* vertex_shader_path, const char* fragment_shader_path){
         file_buffer vertex_shader_code = read_from_PHYSFS(vertex_shader_path);
@@ -60,6 +61,7 @@ void create_shader_table(lua_State* L){
             {"use", use_shader},
             {"set_int", set_shader_int},
             {"set_float", set_shader_float},
+            {"set_mat4", set_shader_mat4},
             {nullptr, nullptr}
         };
         //这个函数把上面的函数填入表
@@ -116,11 +118,15 @@ int set_shader_mat4(lua_State* L){
     int par_num = lua_gettop(L);
     shader* current_shader = *(shader**)(luaL_checkudata(L, 1, "shader"));
     const char* name = luaL_checkstring(L, 2);
-    GLboolean transpose = false;
-    if(par_num>=3){
-        luaL_checktype(L, 3, LUA_TBOOLEAN);
-        transpose = lua_toboolean(L, 3);
+    matrix* mat4 = *(matrix**)(luaL_checkudata(L, 1, "mat"));
+    if(mat4->col!=4||mat4->row!=4){
+        luaL_error(L, "set mat4 in shader with matrix of shape (%zu, %zu)", mat4->col, mat4->row);
     }
-    //current_shader->setMat4(name, *mat, transpose);
+    GLboolean transpose = false;
+    if(par_num>=4){
+        luaL_checktype(L, 4, LUA_TBOOLEAN);
+        transpose = lua_toboolean(L, 4);
+    }
+    current_shader->setMat4(name, mat4->content, transpose);
     return 0;
 }

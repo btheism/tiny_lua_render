@@ -1,3 +1,4 @@
+#该文件用于生成glfw的键盘宏->字符串表.用在编写glfw_macro_table.cpp上
 import re
 
 f = open("key_macro.txt")

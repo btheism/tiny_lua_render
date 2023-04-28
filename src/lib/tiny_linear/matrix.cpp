@@ -1,23 +1,52 @@
+#include <cstdlib>
 #include <tiny_linear.hpp>
 
+//注意,该方法没有初始化矩阵内的值,矩阵中的值处于不定状态
 matrix::matrix(size_t col, size_t row):col(col),row(row){
     int len=row*col;
     if(row==0||col==0){
         fatal("invaild shape\n");
     }
-    content = new float[col*row]();
+    content = new float[col*row];
 };
-matrix::matrix(size_t col, size_t row, float diag):col(col),row(row){
-    if(row!=col){
-        fatal("invaild shape for creating identity matrix \n");
+
+matrix::matrix(const matrix & mirror){
+    row = mirror.row;
+    col = mirror.col;
+    content = new float[col*row];
+    for(size_t i=0; i<col*row; i++){
+        content[i]=mirror.content[i];
     }
-    content = new float[row*row]();
-    for(int i=0; i<col; i++){
-        content[col*col+i]=diag;
+}
+
+//使用向量初始化矩阵,参数由lua检查
+//如果row_major为true,则假定输入数据为行优先,否则,假定输入数据为列优先
+matrix::matrix(size_t col, size_t row, const std::vector<float>& list, bool row_major):col(col),row(row){
+    content = new float[col*row];
+    if(!row_major){
+        //由于矩阵是按列优先存储的,直接按顺序复制数据
+        for(size_t i=0; i<col*row; i++){
+            content[i]=list[i];
+        }
+    }
+    else{
+        for(size_t r=0; r<row; r++){
+            for(size_t c=0; c<col; c++){
+                content[c*row+r]=list[r*col+c];
+            }
+        }
     }
 };
-std::string matrix::tostr(void){
-    log("attempt to print matrix\n");
+//创建对角线值为diag的单位矩阵
+matrix::matrix(size_t len, float diag):col(len),row(len){
+    content = new float[len*len]();
+    for(int i=0; i<len; i++){
+        content[i*len+i]=diag;
+    }
+};
+
+std::string matrix::tostr_col_major(void){
+    //log("attempt to print matrix\n");
     std::string res;
     res.append("{");
     for(size_t c=0; c<col-1; c++){
@@ -27,8 +56,9 @@ std::string matrix::tostr(void){
             res.append(", ");
         }
         res.append(std::to_string(content[row*c+(row-1)]));
-        res.append("}, ");
+        res.append("}, \n");
     }
+    res.append("{");
     for(size_t r=0; r<row-1; r++){
         res.append(std::to_string(content[row*(col-1)+r]));
         res.append(", ");
@@ -36,6 +66,127 @@ std::string matrix::tostr(void){
     res.append(std::to_string(content[row*(col-1)+(row-1)]));
     res.append("}");
     res.append("}");
+    return res;
+}
+
+std::string matrix::tostr(void){
+    std::string res;
+    res.append("{");
+    for(size_t r=0; r<row-1; r++){
+        res.append("{");
+        for(size_t c=0; c<col-1; c++){
+            res.append(std::to_string(content[row*c+r]));
+            res.append(", ");
+        }
+        res.append(std::to_string(content[row*(col-1)+r]));
+        res.append("}, \n");
+    }
+    res.append("{");
+    for(size_t c=0; c<col-1; c++){
+        res.append(std::to_string(content[row*c+(row-1)]));
+        res.append(", ");
+    }
+    res.append(std::to_string(content[row*(col-1)+(row-1)]));
+    res.append("}");
+    res.append("}");
+    return res;
+}
+
+//这些矩阵函数的参数检查在lua处进行
+matrix* add_matrix(const matrix& matl, const matrix& matr){
+    matrix* res =new matrix(matl.col, matl.row);
+    for(size_t c=0; c<matl.col; c++){
+        for(size_t r=0; r<matl.row; r++){
+            res->content[c*matl.row+r] = matl.content[c*matl.row+r]+matr.content[c*matl.row+r];
+        }
+    }
+    return res;
+}
+
+matrix* sub_matrix(const matrix& matl, const matrix& matr){
+    matrix* res =new matrix(matl.col, matl.row);
+    for(size_t c=0; c<matl.col; c++){
+        for(size_t r=0; r<matl.row; r++){
+            res->content[c*matl.row+r] = matl.content[c*matl.row+r]-matr.content[c*matl.row+r];
+        }
+    }
+    return res;
+}
+
+matrix* mul_matrix(const matrix& matl, const matrix& matr){
+    matrix* res =new matrix(matl.row, matr.col);
+    for(size_t c=0; c<matr.col; c++){
+        for(size_t r=0; r<matl.row; r++){
+            float acc=0;
+            for(size_t k=0; k<matl.col; k++){
+                //加上 matl[k][r]*matr[c][k]   ([列][行])
+                acc+= matl.content[k*matl.row+r]*matr.content[c*matr.row+k];
+            }
+            res->content[c*matl.row+r] = acc;
+        }
+    }
+    return res;
+}
+
+//以下3个内联函数用于求解逆矩阵
+//r1,r2是矩阵的行,以下函数对矩阵进行初等行变换,假设行序号以0开始
+static inline void swap_row(const matrix& mat, size_t r1, size_t r2){
+    for(size_t c=0; c<mat.col; c++){
+        std::swap(mat.content[c*mat.row+r1], mat.content[c*mat.col+r2]);
+    }
+}
+//r1=r1-r2*factor
+static inline void sub_row(const matrix& mat, size_t r1, size_t r2, float factor){
+    for(size_t c=0; c<mat.col; c++){
+        mat.content[c*mat.row+r1]-=mat.content[c*mat.col+r2]*factor;
+    }
+}
+//r=r*factor
+static inline void div_row(const matrix& mat, size_t r, float factor){
+    for(size_t c=0; c<mat.col; c++){
+        mat.content[c*mat.row+r]/=factor;
+    }
+}
+
+
+matrix* inverse_matrix(const matrix& mat){
+    size_t len = mat.col;
+    matrix* res =new matrix(mat.row, 1.0f);
+    matrix tmp_mat(mat);
+    //逐列化为(0...1...0)的形式
+    for(size_t c=0; c<len; c++){
+        //寻找主元
+        size_t max_row=c;
+        float max_val=std::abs(tmp_mat.content[c*len+c]);
+        for(size_t r=c+1; r<len; r++){
+            if(std::abs(tmp_mat.content[c*len+r])>max_val){
+                max_row=r;
+                max_val=std::abs(tmp_mat.content[c*len+r]);
+            }
+        }
+        if(max_val==0.0f){
+            continue;
+        }
+        if(max_row!=c){
+            swap_row(tmp_mat, max_row, c);
+            swap_row(*res, max_row, c);
+        }
+        //把主元化为1
+        float pivot = tmp_mat.content[c*len+c];
+        if(pivot!=1.0f){
+            div_row(tmp_mat, c, pivot);
+            div_row(*res, c, pivot);
+        }
+        for(size_t r=0; r<len; r++){
+            if(r==c){
+                continue;
+            }
+            //这里必须保存减数,否则调用sub_row(*res...)时tmp_mat.content[c*len+r]已经被改变
+            float sub_factor = tmp_mat.content[c*len+r];
+            sub_row(tmp_mat, r, c, sub_factor);
+            sub_row(*res, r, c, sub_factor);
+        }
+    }
     return res;
 }
 
@@ -47,37 +198,175 @@ void create_matrix_table(lua_State* L){
         {
             {"__gc", delete_matrix},
             {"__tostring", matrix_to_string},
+            {"__add", add_matrix_lua},
+            {"__mul", mul_matrix_lua},
+            //{"__bnot", inverse_matrix_lua},//使用~算符对矩阵求逆,(一共只有两个一元运算符,'~'和'-','~'似乎是唯一适合使用的算符,然而luajit5.1似乎不支持
             {nullptr, nullptr}
         };
         //这个函数把上面的函数填入表
         luaL_setfuncs(L, functions, 0);
-        //由于__index有额外的重载,因此这里不把index指向元表自身(即不能通过矩阵自己调用这些方法)
+        //复制元表自身
+        lua_pushvalue(L, -1);
+        //设置元表的"__index"指向自身
+        lua_setfield(L, -2, "__index");
     }
     //把栈的-2处的元素的元表设为栈顶元素(即matrix的元表),这也会自动弹出元表,现在栈顶元素是设置了元表的userdata
     lua_setmetatable(L, -2);
     return;
 }
 
-int new_matrix(lua_State* L){
-    size_t col = luaL_checkinteger(L, 1);
-    size_t row = luaL_checkinteger(L, 2);
-
+//这些形如new_*_matrix函数需要配合new_matrix使用,new_matrix根据传入的第一个字符串决定调用哪个函数,参数表从2开始
+int new_id_matrix(lua_State* L){
+    size_t len = luaL_checkinteger(L, 2);
+    float diag = luaL_checknumber(L, 3);
     void* matrix_pp = lua_newuserdata(L, sizeof(void*));
-    *(matrix**)matrix_pp = new matrix(col, row);
+    *(matrix**)matrix_pp = new matrix(len, diag);
     create_matrix_table(L);
     return 1;
-}
+};
 
+int new_col_matrix(lua_State* L){
+    size_t col = luaL_checkinteger(L, 2);
+    size_t row = luaL_checkinteger(L, 3);
+    size_t len = col*row;
+    luaL_checktype(L, 4, LUA_TTABLE);
+    size_t list_len = lua_objlen(L,4);
+    if(list_len<len){
+        luaL_error(L, "fail to create matrix, expect %zu elements, only get %zu", len, list_len);
+    }
+    std::vector<float> list(len);
+    for(int i=1; i<=len; i++){
+        lua_pushinteger(L, i);
+        lua_gettable(L, 4);
+        list[i-1]=luaL_checknumber(L, -1);
+    }
+    void* matrix_pp = lua_newuserdata(L, sizeof(void*));
+    *(matrix**)matrix_pp = new matrix(col, row, list, false);
+    create_matrix_table(L);
+    return 1;
+};
+
+int new_row_matrix(lua_State* L){
+    size_t col = luaL_checkinteger(L, 2);
+    size_t row = luaL_checkinteger(L, 3);
+    size_t len = col*row;
+    luaL_checktype(L, 4, LUA_TTABLE);
+    size_t list_len = lua_objlen(L,4);
+    if(list_len<len){
+        luaL_error(L, "fail to create matrix, expect %zu elements, only get %zu", len, list_len);
+    }
+    std::vector<float> list(len);
+    for(int i=1; i<=len; i++){
+        lua_pushinteger(L, i);
+        lua_gettable(L, 4);
+        list[i-1]=luaL_checknumber(L, -1);
+    }
+    void* matrix_pp = lua_newuserdata(L, sizeof(void*));
+    *(matrix**)matrix_pp = new matrix(col, row, list , true);
+    create_matrix_table(L);
+    return 1;
+};
+
+//生成正视投影矩阵
+int new_ortho_matrix(lua_State* L){
+    return 1;
+};
+
+//生成透视投影矩阵
+int new_perspective_matrix(lua_State* L){
+    return 1;
+};
+
+/*
+从lua的{{},{}}结构中创建矩阵似乎没什么意义,有new_serial_matrix就够了
+int new_table_matrix(lua_State* L){
+    return 1;
+};
+*/
+
+const std::unordered_map<const std::string, int(*)(lua_State* L), std::hash<std::string>> new_matrix_jump_table{
+{"id", new_id_matrix},
+{"col", new_col_matrix},
+{"row", new_row_matrix},
+{"ortho", new_ortho_matrix},
+{"perspect", new_perspective_matrix},
+//{"table", new_table_matrix}
+};
+
+int new_matrix(lua_State* L){
+    const char* type = luaL_checkstring(L, 1);
+    if(!new_matrix_jump_table.count(type)){
+        luaL_error(L, "unknown new matrix type %s", *type);
+    }
+    return new_matrix_jump_table.at(type)(L);
+};
 
 int delete_matrix(lua_State* L){
     delete *(matrix**)(luaL_checkudata(L, 1, "mat"));
     return 0;
-}
-
+};
 
 int matrix_to_string(lua_State* L){
     matrix* mat = *(matrix**)(luaL_checkudata(L, 1, "mat"));
     lua_pushstring(L, mat->tostr().c_str());
+    return 1;
+};
+
+int get_matrix_col(lua_State* L){
+    matrix* mat = *(matrix**)(luaL_checkudata(L, 1, "mat"));
+    lua_pushinteger(L, mat->col);
+    return 1;
+};
+int get_matrix_row(lua_State* L){
+    matrix* mat = *(matrix**)(luaL_checkudata(L, 1, "mat"));
+    lua_pushinteger(L, mat->row);
+    return 1;
+};
+
+int add_matrix_lua(lua_State* L){
+    matrix* matl = *(matrix**)(luaL_checkudata(L, 1, "mat"));
+    matrix* matr = *(matrix**)(luaL_checkudata(L, 2, "mat"));
+    if(matl->col!=matr->col||matl->row!=matr->row){
+        luaL_error(L, "add matrix of size (%zu, %zu) and (%zu, %zu)", matl->col, matl->row, matr->col, matr->row);
+    }
+    void* matrix_pp = lua_newuserdata(L, sizeof(void*));
+    *(matrix**)matrix_pp = add_matrix(*matl, *matr);
+    create_matrix_table(L);
+    return 1;
+}
+
+int sub_matrix_lua(lua_State* L){
+    matrix* matl = *(matrix**)(luaL_checkudata(L, 1, "mat"));
+    matrix* matr = *(matrix**)(luaL_checkudata(L, 2, "mat"));
+    if(matl->col!=matr->col||matl->row!=matr->row){
+        luaL_error(L, "sub matrix of size (%zu, %zu) and (%zu, %zu)", matl->col, matl->row, matr->col, matr->row);
+    }
+    void* matrix_pp = lua_newuserdata(L, sizeof(void*));
+    *(matrix**)matrix_pp = sub_matrix(*matl, *matr);
+    create_matrix_table(L);
+    return 1;
+}
+
+int mul_matrix_lua(lua_State* L){
+    matrix* matl = *(matrix**)(luaL_checkudata(L, 1, "mat"));
+    matrix* matr = *(matrix**)(luaL_checkudata(L, 2, "mat"));
+    if(matl->col!=matr->row){
+        luaL_error(L, "multiply matrix of size (%zu, %zu) and (%zu, %zu)", matl->col, matl->row, matr->col, matr->row);
+    }
+    void* matrix_pp = lua_newuserdata(L, sizeof(void*));
+    *(matrix**)matrix_pp = mul_matrix(*matl, *matr);
+    create_matrix_table(L);
+    return 1;
+}
+
+int inverse_matrix_lua(lua_State* L){
+    matrix* mat = *(matrix**)(luaL_checkudata(L, 1, "mat"));
+    if(mat->row!=mat->col){
+        luaL_error(L, "inverse a matrix of size (%zu, %zu)", mat->col, mat->row);
+    }
+    void* matrix_pp = lua_newuserdata(L, sizeof(void*));
+    *(matrix**)matrix_pp = inverse_matrix(*mat);
+    create_matrix_table(L);
     return 1;
 }
 

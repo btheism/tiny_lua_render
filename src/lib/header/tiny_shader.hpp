@@ -28,15 +28,13 @@ public:
         }
         glUniform1f(uni_loc, value);
     }
-    /*
-    void setMat4(const char* name, const glm::mat4& mat, GLboolean transpose) const{
+    void setMat4(const char* name, float *mat4, GLboolean transpose) const{
         int uni_loc = glGetUniformLocation(ID, name);
         if(uni_loc==-1){
             fatal("cannot find uniform %s in shader\n", name)
         }
-        glUniformMatrix4fv(uni_loc, 1, transpose, &mat[0][0]);
+        glUniformMatrix4fv(uni_loc, 1, transpose, mat4);
     }
-    */
 
     private:
     static void checkCompileErrors(unsigned int shader, const char* type);
@@ -50,6 +48,7 @@ int delete_shader(lua_State* L);
 int use_shader(lua_State* L);
 int set_shader_int(lua_State* L);
 int set_shader_float(lua_State* L);
+int set_shader_mat4(lua_State* L);
 
 void luaopen_tiny_shaderlib(lua_State *L);
 

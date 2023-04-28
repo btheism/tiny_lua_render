@@ -2,6 +2,9 @@
 
 const luaL_Reg tiny_linear_func[] = {
     {"new_mat", new_matrix},
+    {"inverse", inverse_matrix_lua},
+    {"mat_col", get_matrix_col},
+    {"mat_row", get_matrix_row},
     {nullptr, nullptr}
 };
 

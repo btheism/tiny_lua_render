@@ -9,5 +9,6 @@ bin/lib/libtiny_common.so
 bin/test/glfw_callback
 bin/test/glfw_getkey
 bin/test/vao_vbo
+bin/test/glm_matrix
 bin/main/render
 scripts/__pycache__
