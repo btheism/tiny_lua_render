@@ -1,4 +1,4 @@
-#include <tiny_matrix.hpp>
+#include <tiny_linear.hpp>
 
 matrix::matrix(size_t col, size_t row):col(col),row(row){
     int len=row*col;

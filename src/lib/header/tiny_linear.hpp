@@ -13,7 +13,7 @@ public:
     }
 };
 
-void luaopen_tiny_matrixlib(lua_State *L);
+void luaopen_tiny_linearlib(lua_State *L);
 
 int new_matrix(lua_State* L);
 int matrix_to_string(lua_State* L);

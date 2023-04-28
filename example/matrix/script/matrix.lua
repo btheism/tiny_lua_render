@@ -1,1 +1,1 @@
-print(mat.new_mat(3,4))
+print(linear.new_mat(3,4))
