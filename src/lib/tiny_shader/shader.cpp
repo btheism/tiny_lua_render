@@ -51,23 +51,24 @@ void shader::checkCompileErrors(unsigned int shader, const char* type)
     }
 }
 
-static const std::unordered_map<size_t, void(*)(GLint, GLsizei, const GLfloat*)>setvec_func_table{
-    {1, glUniform1fv},
-    {2, glUniform2fv},
-    {3, glUniform3fv},
-    {4, glUniform4fv}
+static const std::unordered_map<size_t, void(**)(GLint, GLsizei, const GLfloat*)>setvec_func_table{
+    {1, &glUniform1fv},
+    {2, &glUniform2fv},
+    {3, &glUniform3fv},
+    {4, &glUniform4fv}
 };
 //使用col<<8+row计算每个矩阵对应的函数的key值,从而把不同维度的函数映射到不同的函数
-static const std::unordered_map<size_t, void(*)(GLint, GLsizei, GLboolean, const GLfloat*)>setmat_func_table{
-    {(2<<8)+2, glUniformMatrix2fv},
-    {(3<<8)+3, glUniformMatrix3fv},
-    {(4<<8)+4, glUniformMatrix4fv},
-    {(2<<8)+3, glUniformMatrix2x3fv},
-    {(3<<8)+2, glUniformMatrix3x2fv},
-    {(2<<8)+4, glUniformMatrix2x4fv},
-    {(4<<8)+2, glUniformMatrix4x2fv},
-    {(3<<8)+4, glUniformMatrix3x4fv},
-    {(4<<8)+3, glUniformMatrix4x3fv}
+//这些函数指针的值会在运行时改变,因此需要存储指针的地址,不能直接存储指针(作为全局变量时未初始化)的值
+static const std::unordered_map<size_t, void(**)(GLint, GLsizei, GLboolean, const GLfloat*)>setmat_func_table{
+    {(2<<8)+2, &glUniformMatrix2fv},
+    {(3<<8)+3, &glUniformMatrix3fv},
+    {(4<<8)+4, &glUniformMatrix4fv},
+    {(2<<8)+3, &glUniformMatrix2x3fv},
+    {(3<<8)+2, &glUniformMatrix3x2fv},
+    {(2<<8)+4, &glUniformMatrix2x4fv},
+    {(4<<8)+2, &glUniformMatrix4x2fv},
+    {(3<<8)+4, &glUniformMatrix3x4fv},
+    {(4<<8)+3, &glUniformMatrix4x3fv}
 };
 
 void shader::setMat(const char* name, const matrix &mat, GLboolean transpose) const{
@@ -78,7 +79,7 @@ void shader::setMat(const char* name, const matrix &mat, GLboolean transpose) co
     if(!setmat_func_table.count((mat.col<<8)+mat.row)){
         fatal("do not support set matrix of size (%zu, %zu) in shader\n", mat.col, mat.row)
     }
-    setmat_func_table.at((mat.col<<8)+mat.row)(uni_loc, 1, transpose, mat.content);
+    (**setmat_func_table.at((mat.col<<8)+mat.row))(uni_loc, 1, transpose, mat.content);
 }
 
 void shader::setVec(const char* name, const matrix &mat) const{
@@ -89,7 +90,7 @@ void shader::setVec(const char* name, const matrix &mat) const{
     if(std::min(mat.col,mat.row)!=1||!setvec_func_table.count(std::max(mat.col,mat.row))){
         fatal("do not support set vector of size (%zu, %zu) in shader\n", mat.col, mat.row)
     }
-    setvec_func_table.at(std::max(mat.col,mat.row))(uni_loc, 1, mat.content);
+    (**setvec_func_table.at(std::max(mat.col,mat.row)))(uni_loc, 1, mat.content);
 }
 
 //该函数应配合new_shader使用,设置栈顶上的元素的元表为shader
@@ -161,12 +162,13 @@ int set_shader_mat(lua_State* L){
     int par_num = lua_gettop(L);
     shader* current_shader = *(shader**)(luaL_checkudata(L, 1, "shader"));
     const char* name = luaL_checkstring(L, 2);
-    matrix* mat = *(matrix**)(luaL_checkudata(L, 1, "mat"));
+    matrix* mat = *(matrix**)(luaL_checkudata(L, 3, "mat"));
     GLboolean transpose = false;
     if(par_num>=4){
         luaL_checktype(L, 4, LUA_TBOOLEAN);
         transpose = lua_toboolean(L, 4);
     }
+    //log("set mat from lua\n")
     current_shader->setMat(name, *mat, transpose);
     return 0;
 }

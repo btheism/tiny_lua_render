@@ -1,3 +1,4 @@
+#include <cstdio>
 #include<tiny_window.hpp>
 
 //全局变量,指向当前窗口
@@ -40,6 +41,7 @@ void init(const char* window_title, int window_width, int window_height){
         fatal("Failed to initialize glfw\n");
         return;
     }
+
     window = glfwCreateWindow(window_width, window_height, window_title, NULL, NULL);
     if (window == NULL)
     {
@@ -57,34 +59,14 @@ void init(const char* window_title, int window_width, int window_height){
     }
 
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+    //glfwSetInputMode(window, GLFW_STICKY_KEYS, GLFW_TRUE);
+    glEnable(GL_DEPTH_TEST);
+
     return;
 };
 
 void init(const char* window_title, const char* window_icon_path, int window_width, int window_height){
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    if(!glfwInit()){
-        fatal("Failed to initialize glfw\n");
-        return;
-    }
-    window = glfwCreateWindow(window_width, window_height, window_title, NULL, NULL);
-    if (window == NULL)
-    {
-        glfwTerminate();
-        fatal("Failed to create GLFW window\n");
-        glfwTerminate();
-        return;
-    }
-    glfwMakeContextCurrent(window);
-
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)){
-        glfwTerminate();
-        fatal("Failed to initialize GLAD\n");
-        return;
-    }
-    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-
+    init(window_title, window_width, window_height);
     //根据注释"This function sets the icon of the specified window. If passed an array of candidate images, those of or closest to the sizes desired by the system are selected",似乎可以传入一组图标
     GLFWimage images[1];
     image_8bit icon_image(window_icon_path, false, 4); //必须加载为rgba,故传入4
@@ -112,13 +94,16 @@ int set_clear_color(lua_State *L){
 }
 
 int clear(lua_State *L){
-    glClear(GL_COLOR_BUFFER_BIT);
+    //注意清除缓冲位
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     return 0;
 }
 
 int fresh(lua_State *L){
     glfwSwapBuffers(window);
     glfwPollEvents();
+    //注意清除缓冲位
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     return 0;
 }
 

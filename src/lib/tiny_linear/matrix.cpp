@@ -251,6 +251,36 @@ matrix transpose_matrix(const matrix& mat){
     return res;
 }
 
+matrix move_matrix(double x, double y, double z){
+    matrix res(diag_matrix(4, 1));
+    res.content[12]=x;
+    res.content[13]=y;
+    res.content[14]=z;
+    return res;
+}
+
+//推导参见https://zhuanlan.zhihu.com/p/56587491
+matrix rotate_matrix(double angle, double x, double y, double z){
+    matrix res(4,4);
+    double axis_len = std::sqrt(x*x+y*y+z*z);
+    x/=axis_len;
+    y/=axis_len;
+    z/=axis_len;
+    double angle_cos = std::cos(angle);
+    double angle_sin = std::sin(angle);
+    res.content[0]=x*x*(1-angle_cos)+angle_cos;
+    res.content[1]=x*y*(1-angle_cos)+z*angle_sin;
+    res.content[2]=x*z*(1-angle_cos)-y*angle_sin;
+    res.content[4]=x*y*(1-angle_cos)-z*angle_sin;
+    res.content[5]=y*y*(1-angle_cos)+angle_cos;
+    res.content[6]=y*z*(1-angle_cos)+x*angle_sin;
+    res.content[8]=x*z*(1-angle_cos)+y*angle_sin;
+    res.content[9]=y*z*(1-angle_cos)-x*angle_sin;
+    res.content[10]=z*z*(1-angle_cos)+angle_cos;
+    res.content[15]=1.0;
+    return res;
+}
+
 //该函数应配合new_mesh使用,设置栈顶上的元素的元表为mesh
 void create_matrix_table(lua_State* L){
     //该函数可以避免元表被重复注册,并把元表放在栈顶
@@ -353,6 +383,27 @@ int new_perspective_matrix(lua_State* L){
     return 1;
 };
 
+int new_move_matrix(lua_State* L){
+    double x = luaL_checknumber(L, 2);
+    double y = luaL_checknumber(L, 3);
+    double z = luaL_checknumber(L, 4);
+    void* matrix_pp = lua_newuserdata(L, sizeof(void*));
+    *(matrix**)matrix_pp = new matrix(move_matrix(x,y,z));
+    create_matrix_table(L);
+    return 1;
+}
+
+int new_rotate_matrix(lua_State* L){
+    double angle = luaL_checknumber(L, 2);
+    double x = luaL_checknumber(L, 3);
+    double y = luaL_checknumber(L, 4);
+    double z = luaL_checknumber(L, 5);
+    void* matrix_pp = lua_newuserdata(L, sizeof(void*));
+    *(matrix**)matrix_pp = new matrix(rotate_matrix(angle,x,y,z));
+    create_matrix_table(L);
+    return 1;
+}
+
 /*
 从lua的{{},{}}结构中创建矩阵似乎没什么意义,有new_serial_matrix就够了
 int new_table_matrix(lua_State* L){
@@ -366,6 +417,8 @@ const std::unordered_map<const std::string, int(*)(lua_State* L), std::hash<std:
 {"row", new_row_matrix},
 {"ortho", new_ortho_matrix},
 {"persp", new_perspective_matrix},
+{"move", new_move_matrix},
+{"rotate", new_rotate_matrix}
 //{"table", new_table_matrix}
 };
 
@@ -453,7 +506,5 @@ int transpose_matrix_lua(lua_State* L){
     create_matrix_table(L);
     return 1;
 }
-
-
 
 
