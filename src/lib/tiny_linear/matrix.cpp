@@ -1,15 +1,15 @@
-#include <cstdlib>
 #include <tiny_linear.hpp>
 
-//注意,该方法没有初始化矩阵内的值,矩阵中的值处于不定状态
+//该方法返回一个全0矩阵
 matrix::matrix(size_t col, size_t row):col(col),row(row){
     int len=row*col;
     if(row==0||col==0){
         fatal("invaild shape\n");
     }
-    content = new float[col*row];
+    content = new float[col*row]();
 };
 
+//复制矩阵
 matrix::matrix(const matrix & mirror){
     row = mirror.row;
     col = mirror.col;
@@ -17,6 +17,14 @@ matrix::matrix(const matrix & mirror){
     for(size_t i=0; i<col*row; i++){
         content[i]=mirror.content[i];
     }
+}
+
+//右值复制
+matrix::matrix(matrix && mirror){
+    row = mirror.row;
+    col = mirror.col;
+    content = mirror.content;
+    mirror.content=nullptr;
 }
 
 //使用向量初始化矩阵,参数由lua检查
@@ -37,12 +45,55 @@ matrix::matrix(size_t col, size_t row, const std::vector<float>& list, bool row_
         }
     }
 };
-//创建对角线值为diag的单位矩阵
-matrix::matrix(size_t len, float diag):col(len),row(len){
-    content = new float[len*len]();
+
+//创建一个对角矩阵
+matrix diag_matrix(size_t len, float diag){
+    matrix res(len, len);
     for(int i=0; i<len; i++){
-        content[i*len+i]=diag;
+        res.content[i*len+i]=diag;
     }
+    return res;
+};
+
+//创建一个正视投影矩阵,该函数的语义与glm::ortho一致,
+//把右手系下的[left,right],[top, bottom],[-near, -far]空间内的坐标线性映射到opengl空间[-1,1],[-1,1],[-1,1](opengl使用左手系,-1位于最前面)
+matrix ortho_matrix(double left, double right, double top, double bottom, double near, double far){
+//matrix ortho_matrix(float left, float right, float top, float bottom, float near, float far){
+    matrix res(4, 4);
+    //分别计算矩阵的非0元素
+    /*
+    {{2/(r - l), 0, 0, -(r + l)/(r - l)},
+    {0, 2/(t - b), 0, -(t + b)/(t - b)},
+    {0, 0, - 2/(f - n), -(f + n)/(f - n)},
+    {0, 0, 0, 1}}
+    */
+    res.content[0]=2.0/(right-left);
+    res.content[12]=(left+right)/(left-right);
+    res.content[5]=2.0/(bottom-top);
+    res.content[13]=(top+bottom)/(top-bottom);
+    res.content[10]=2.0/(near-far);
+    res.content[14]=(near+far)/(near-far);
+    res.content[15]=1.0;
+    return res;
+};
+
+//生成透视投影矩阵(这里的视角指top和bottom与原点(即水平面)的夹角)
+/*
+{{Cot[fov/2]/aspect, 0, 0, 0},
+{0, Cot[fov/2], 0, 0},
+{0, 0, -(f+n)/(f-n), -2*f*n/(f-n)},
+{0, 0,-1, 0}}
+*/
+matrix perspective_matrix(double fov, double aspect, double near, double far){
+//matrix ortho_matrix(float left, float right, float top, float bottom, float near, float far){
+    matrix res(4, 4);
+    //分别计算矩阵的非0元素
+    res.content[0]=1.0/(std::tan(fov/2.0)*aspect);
+    res.content[5]=1.0/std::tan(fov/2.0);
+    res.content[10]=(near+far)/(near-far);
+    res.content[14]=2*near*far/(near-far);
+    res.content[11]=-1.0;
+    return res;
 };
 
 std::string matrix::tostr_col_major(void){
@@ -93,28 +144,28 @@ std::string matrix::tostr(void){
 }
 
 //这些矩阵函数的参数检查在lua处进行
-matrix* add_matrix(const matrix& matl, const matrix& matr){
-    matrix* res =new matrix(matl.col, matl.row);
+matrix add_matrix(const matrix& matl, const matrix& matr){
+    matrix res(matl.col, matl.row);
     for(size_t c=0; c<matl.col; c++){
         for(size_t r=0; r<matl.row; r++){
-            res->content[c*matl.row+r] = matl.content[c*matl.row+r]+matr.content[c*matl.row+r];
+            res.content[c*matl.row+r] = matl.content[c*matl.row+r]+matr.content[c*matl.row+r];
         }
     }
     return res;
 }
 
-matrix* sub_matrix(const matrix& matl, const matrix& matr){
-    matrix* res =new matrix(matl.col, matl.row);
+matrix sub_matrix(const matrix& matl, const matrix& matr){
+    matrix res(matl.col, matl.row);
     for(size_t c=0; c<matl.col; c++){
         for(size_t r=0; r<matl.row; r++){
-            res->content[c*matl.row+r] = matl.content[c*matl.row+r]-matr.content[c*matl.row+r];
+            res.content[c*matl.row+r] = matl.content[c*matl.row+r]-matr.content[c*matl.row+r];
         }
     }
     return res;
 }
 
-matrix* mul_matrix(const matrix& matl, const matrix& matr){
-    matrix* res =new matrix(matl.row, matr.col);
+matrix mul_matrix(const matrix& matl, const matrix& matr){
+    matrix res(matl.row, matr.col);
     for(size_t c=0; c<matr.col; c++){
         for(size_t r=0; r<matl.row; r++){
             float acc=0;
@@ -122,7 +173,7 @@ matrix* mul_matrix(const matrix& matl, const matrix& matr){
                 //加上 matl[k][r]*matr[c][k]   ([列][行])
                 acc+= matl.content[k*matl.row+r]*matr.content[c*matr.row+k];
             }
-            res->content[c*matl.row+r] = acc;
+            res.content[c*matl.row+r] = acc;
         }
     }
     return res;
@@ -149,9 +200,9 @@ static inline void div_row(const matrix& mat, size_t r, float factor){
 }
 
 
-matrix* inverse_matrix(const matrix& mat){
+matrix inverse_matrix(const matrix& mat){
     size_t len = mat.col;
-    matrix* res =new matrix(mat.row, 1.0f);
+    matrix res(diag_matrix(len, 1.0f));
     matrix tmp_mat(mat);
     //逐列化为(0...1...0)的形式
     for(size_t c=0; c<len; c++){
@@ -169,13 +220,13 @@ matrix* inverse_matrix(const matrix& mat){
         }
         if(max_row!=c){
             swap_row(tmp_mat, max_row, c);
-            swap_row(*res, max_row, c);
+            swap_row(res, max_row, c);
         }
         //把主元化为1
         float pivot = tmp_mat.content[c*len+c];
         if(pivot!=1.0f){
             div_row(tmp_mat, c, pivot);
-            div_row(*res, c, pivot);
+            div_row(res, c, pivot);
         }
         for(size_t r=0; r<len; r++){
             if(r==c){
@@ -184,7 +235,17 @@ matrix* inverse_matrix(const matrix& mat){
             //这里必须保存减数,否则调用sub_row(*res...)时tmp_mat.content[c*len+r]已经被改变
             float sub_factor = tmp_mat.content[c*len+r];
             sub_row(tmp_mat, r, c, sub_factor);
-            sub_row(*res, r, c, sub_factor);
+            sub_row(res, r, c, sub_factor);
+        }
+    }
+    return res;
+}
+
+matrix transpose_matrix(const matrix& mat){
+    matrix res(mat.row, mat.col);
+    for(size_t res_c=0; res_c<res.col; res_c++){
+        for(size_t res_r=0; res_r<res.row; res_r++){
+            res.content[res_c*res.row+res_r]=mat.content[res_r*mat.row+res_c];
         }
     }
     return res;
@@ -220,7 +281,7 @@ int new_id_matrix(lua_State* L){
     size_t len = luaL_checkinteger(L, 2);
     float diag = luaL_checknumber(L, 3);
     void* matrix_pp = lua_newuserdata(L, sizeof(void*));
-    *(matrix**)matrix_pp = new matrix(len, diag);
+    *(matrix**)matrix_pp = new matrix(diag_matrix(len, diag));
     create_matrix_table(L);
     return 1;
 };
@@ -267,13 +328,28 @@ int new_row_matrix(lua_State* L){
     return 1;
 };
 
-//生成正视投影矩阵
 int new_ortho_matrix(lua_State* L){
+    double left = luaL_checknumber(L, 2);
+    double right = luaL_checkinteger(L, 3);
+    double top = luaL_checkinteger(L, 4);
+    double bottom = luaL_checkinteger(L, 5);
+    double near = luaL_checkinteger(L, 6);
+    double far = luaL_checkinteger(L, 7);
+    void* matrix_pp = lua_newuserdata(L, sizeof(void*));
+    *(matrix**)matrix_pp = new matrix(ortho_matrix(left, right, top, bottom, near, far));
+    create_matrix_table(L);
     return 1;
 };
 
-//生成透视投影矩阵
 int new_perspective_matrix(lua_State* L){
+    double fov = luaL_checknumber(L, 2);
+    double aspect = luaL_checknumber(L, 3);
+    double near = luaL_checknumber(L, 4);
+    double far = luaL_checknumber(L, 5);
+    void* matrix_pp = lua_newuserdata(L, sizeof(void*));
+    //fov:field of view,视野
+    *(matrix**)matrix_pp = new matrix(perspective_matrix(fov, aspect, near, far));
+    create_matrix_table(L);
     return 1;
 };
 
@@ -289,7 +365,7 @@ const std::unordered_map<const std::string, int(*)(lua_State* L), std::hash<std:
 {"col", new_col_matrix},
 {"row", new_row_matrix},
 {"ortho", new_ortho_matrix},
-{"perspect", new_perspective_matrix},
+{"persp", new_perspective_matrix},
 //{"table", new_table_matrix}
 };
 
@@ -330,7 +406,7 @@ int add_matrix_lua(lua_State* L){
         luaL_error(L, "add matrix of size (%zu, %zu) and (%zu, %zu)", matl->col, matl->row, matr->col, matr->row);
     }
     void* matrix_pp = lua_newuserdata(L, sizeof(void*));
-    *(matrix**)matrix_pp = add_matrix(*matl, *matr);
+    *(matrix**)matrix_pp = new matrix(add_matrix(*matl, *matr));
     create_matrix_table(L);
     return 1;
 }
@@ -342,7 +418,7 @@ int sub_matrix_lua(lua_State* L){
         luaL_error(L, "sub matrix of size (%zu, %zu) and (%zu, %zu)", matl->col, matl->row, matr->col, matr->row);
     }
     void* matrix_pp = lua_newuserdata(L, sizeof(void*));
-    *(matrix**)matrix_pp = sub_matrix(*matl, *matr);
+    *(matrix**)matrix_pp = new matrix(sub_matrix(*matl, *matr));
     create_matrix_table(L);
     return 1;
 }
@@ -354,10 +430,10 @@ int mul_matrix_lua(lua_State* L){
         luaL_error(L, "multiply matrix of size (%zu, %zu) and (%zu, %zu)", matl->col, matl->row, matr->col, matr->row);
     }
     void* matrix_pp = lua_newuserdata(L, sizeof(void*));
-    *(matrix**)matrix_pp = mul_matrix(*matl, *matr);
+    *(matrix**)matrix_pp = new matrix(mul_matrix(*matl, *matr));
     create_matrix_table(L);
     return 1;
-}
+};
 
 int inverse_matrix_lua(lua_State* L){
     matrix* mat = *(matrix**)(luaL_checkudata(L, 1, "mat"));
@@ -365,7 +441,15 @@ int inverse_matrix_lua(lua_State* L){
         luaL_error(L, "inverse a matrix of size (%zu, %zu)", mat->col, mat->row);
     }
     void* matrix_pp = lua_newuserdata(L, sizeof(void*));
-    *(matrix**)matrix_pp = inverse_matrix(*mat);
+    *(matrix**)matrix_pp = new matrix(inverse_matrix(*mat));
+    create_matrix_table(L);
+    return 1;
+};
+
+int transpose_matrix_lua(lua_State* L){
+    matrix* mat = *(matrix**)(luaL_checkudata(L, 1, "mat"));
+    void* matrix_pp = lua_newuserdata(L, sizeof(void*));
+    *(matrix**)matrix_pp = new matrix(transpose_matrix(*mat));
     create_matrix_table(L);
     return 1;
 }

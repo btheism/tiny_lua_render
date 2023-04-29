@@ -47,7 +47,7 @@ LIBRARY_WITH_PATH:= $(NVCC_LIBRARY_WITH_PATH) $(C_LIBRARY_WITH_PATH) $(CPP_LIBRA
 #lists of test programs , add new test programs to here to compile them
 NVCC_TEST :=
 C_TEST := 
-CPP_TEST := glfw_callback glfw_getkey vao_vbo glm_matrix
+CPP_TEST := glfw_callback glfw_getkey vao_vbo glm_matrix glm_ortho_etc
 
 NVCC_TEST_WITH_PATH :=$(addprefix $(TEST_BIN_DIR), $(NVCC_TEST) )
 C_TEST_WITH_PATH :=$(addprefix $(TEST_BIN_DIR), $(C_TEST) )

@@ -7,6 +7,7 @@
 #include <GLFW/glfw3.h>
 #include <cstdio>
 #include <cstdlib>
+#include <cmath>
 #include <luajit-2.1/lua.hpp>
 #include <physfs.h>
 #include <unordered_map>

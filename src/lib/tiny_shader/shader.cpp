@@ -1,5 +1,6 @@
 #include <tiny_shader.hpp>
 #include <tiny_linear.hpp>
+#include <unordered_map>
 
 shader* shader_from_file(const char* vertex_shader_path, const char* fragment_shader_path){
         file_buffer vertex_shader_code = read_from_PHYSFS(vertex_shader_path);
@@ -50,6 +51,47 @@ void shader::checkCompileErrors(unsigned int shader, const char* type)
     }
 }
 
+static const std::unordered_map<size_t, void(*)(GLint, GLsizei, const GLfloat*)>setvec_func_table{
+    {1, glUniform1fv},
+    {2, glUniform2fv},
+    {3, glUniform3fv},
+    {4, glUniform4fv}
+};
+//使用col<<8+row计算每个矩阵对应的函数的key值,从而把不同维度的函数映射到不同的函数
+static const std::unordered_map<size_t, void(*)(GLint, GLsizei, GLboolean, const GLfloat*)>setmat_func_table{
+    {(2<<8)+2, glUniformMatrix2fv},
+    {(3<<8)+3, glUniformMatrix3fv},
+    {(4<<8)+4, glUniformMatrix4fv},
+    {(2<<8)+3, glUniformMatrix2x3fv},
+    {(3<<8)+2, glUniformMatrix3x2fv},
+    {(2<<8)+4, glUniformMatrix2x4fv},
+    {(4<<8)+2, glUniformMatrix4x2fv},
+    {(3<<8)+4, glUniformMatrix3x4fv},
+    {(4<<8)+3, glUniformMatrix4x3fv}
+};
+
+void shader::setMat(const char* name, const matrix &mat, GLboolean transpose) const{
+    int uni_loc = glGetUniformLocation(ID, name);
+    if(uni_loc==-1){
+        fatal("cannot find uniform %s in shader\n", name)
+    }
+    if(!setmat_func_table.count((mat.col<<8)+mat.row)){
+        fatal("do not support set matrix of size (%zu, %zu) in shader\n", mat.col, mat.row)
+    }
+    setmat_func_table.at((mat.col<<8)+mat.row)(uni_loc, 1, transpose, mat.content);
+}
+
+void shader::setVec(const char* name, const matrix &mat) const{
+    int uni_loc = glGetUniformLocation(ID, name);
+    if(uni_loc==-1){
+        fatal("cannot find uniform %s in shader\n", name)
+    }
+    if(std::min(mat.col,mat.row)!=1||!setvec_func_table.count(std::max(mat.col,mat.row))){
+        fatal("do not support set vector of size (%zu, %zu) in shader\n", mat.col, mat.row)
+    }
+    setvec_func_table.at(std::max(mat.col,mat.row))(uni_loc, 1, mat.content);
+}
+
 //该函数应配合new_shader使用,设置栈顶上的元素的元表为shader
 void create_shader_table(lua_State* L){
     //该函数可以避免元表被重复注册,并把元表放在栈顶
@@ -61,7 +103,8 @@ void create_shader_table(lua_State* L){
             {"use", use_shader},
             {"set_int", set_shader_int},
             {"set_float", set_shader_float},
-            {"set_mat4", set_shader_mat4},
+            {"set_mat", set_shader_mat},
+            {"set_vec", set_shader_vec},
             {nullptr, nullptr}
         };
         //这个函数把上面的函数填入表
@@ -114,19 +157,26 @@ int set_shader_float(lua_State* L){
     return 0;
 }
 
-int set_shader_mat4(lua_State* L){
+int set_shader_mat(lua_State* L){
     int par_num = lua_gettop(L);
     shader* current_shader = *(shader**)(luaL_checkudata(L, 1, "shader"));
     const char* name = luaL_checkstring(L, 2);
-    matrix* mat4 = *(matrix**)(luaL_checkudata(L, 1, "mat"));
-    if(mat4->col!=4||mat4->row!=4){
-        luaL_error(L, "set mat4 in shader with matrix of shape (%zu, %zu)", mat4->col, mat4->row);
-    }
+    matrix* mat = *(matrix**)(luaL_checkudata(L, 1, "mat"));
     GLboolean transpose = false;
     if(par_num>=4){
         luaL_checktype(L, 4, LUA_TBOOLEAN);
         transpose = lua_toboolean(L, 4);
     }
-    current_shader->setMat4(name, mat4->content, transpose);
+    current_shader->setMat(name, *mat, transpose);
+    return 0;
+}
+
+int set_shader_vec(lua_State* L){
+    int par_num = lua_gettop(L);
+    shader* current_shader = *(shader**)(luaL_checkudata(L, 1, "shader"));
+    const char* name = luaL_checkstring(L, 2);
+    matrix* mat = *(matrix**)(luaL_checkudata(L, 1, "mat"));
+    GLboolean transpose = false;
+    current_shader->setVec(name, *mat);
     return 0;
 }
