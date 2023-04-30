@@ -6,23 +6,25 @@ tex_keqing = texture.new_texture_2d("image/keqing.jpg", "rgb", "rgba", "repeat",
 tex_keli = texture.new_texture_2d("image/keli.jpg", "rgb", "rgba", "repeat", "repeat", "linear", "linear")
 box.tex=tex_keqing
 
-box.pos = {0,0,-3}
-box.rotate = {math.rad(45),1,2,3}
+--[[
+da=linear.new_vec(3,{1,3,4})
+db=linear.new_mat("row", 3, 2, {1,5,6,2,8,9})
+print(da)
+print(db)
+print(db*da)
+]]--
 
-camera0={}
-camera0.pos={0,0,0}
-camera0.clip={"persp", math.rad(45),1.0,0.1,100}
+box.pos = linear.new_vec(3, {0,0,-3})
+box.rotate = {math.rad(45),linear.new_vec(3, {1,2,3})}
 
-
-function box:draw(camera)
+function box:draw()
     local final_mat =
-    linear.new_mat(unpack(camera0.clip))
-    *linear.new_mat("move", unpack(camera.pos))
-    *linear.new_mat("move", unpack(self.pos))
+    self.camera.look
+    *linear.new_mat("move", self.pos)
     *linear.new_mat("rotate", unpack(self.rotate))
-    box.shader:set_mat("trans", final_mat)
-    box.tex:active(0)
-    box.mesh:draw()
+    self.shader:set_mat("trans", final_mat)
+    self.tex:active(0)
+    self.mesh:draw()
 end
 
 last_press={}
@@ -56,23 +58,7 @@ function process_input()
             box.tex=tex_keqing
         end
     end
-    if(window.key_pressed("up"))
-    then
-        camera0.clip[2]=camera0.clip[2]+0.04
-        if(camera0.clip[2]>1.5)
-        then
-            camera0.clip[2]=1.5
-        end
-    end
-    if(window.key_pressed("down"))
-    then
-        camera0.clip[2]=camera0.clip[2]-0.04
-        if(camera0.clip[2]<0.05)
-        then
-            camera0.clip[2]=0.05
-        end
-    end
-
+    box.camera:process_input()
 end
 
 acc_time=0
@@ -82,11 +68,12 @@ function update(dt)
     then
     acc_time=acc_time-1.0
     end
+    box.camera:update()
     local red = math.sin(180*acc_time)
     local green = math.sin(180*acc_time)
     local blue = math.sin(180*acc_time)
     box.rotate[1]=box.rotate[1]+dt*10
-    box:draw(camera0)
+    box:draw()
     window.set_clear_color(red, green, blue, 1)
 end
 

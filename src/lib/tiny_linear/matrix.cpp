@@ -194,7 +194,7 @@ matrix mul_mat_num(const matrix& mat, double num){
     return res;
 }
 
-vector mul_mat_vec(const matrix& mat, vector vec){
+vector mul_mat_vec(const matrix& mat, const vector& vec){
     if(vec.size!=mat.col){
         fatal("mul matrix of size (%zu, %zu) to vector of size %zu to \n",mat.col, mat.row, vec.size);
     }
@@ -335,6 +335,7 @@ matrix lookat_mat(const vector& campos, const vector& target, const vector& worl
     look_rotate.content[9]=cam_up.content[2];
     look_rotate.content[10]=cam_d.content[2];
     look_rotate.content[15]=1.0;
+    //需要额外乘以一个平移矩阵
     return mul_mat_mat(look_rotate, move_mat(neg_vec(campos)));
 }
 
@@ -541,26 +542,46 @@ int sub_mat_lua(lua_State* L){
     return 1;
 }
 
+//不加括号时,lua的二元运算符的顺序不定(不能假定lua会优先查找哪个操作数的元方法,全写一遍算了)
+//例如a+b+c居然会先调用c的元方法!!!
 int mul_mat_lua(lua_State* L){
-    matrix* matl = *(matrix**)(luaL_checkudata(L, 1, "mat"));
-    if(lua_type(L,2)==LUA_TNUMBER){
-        //向量乘数
-        float num = lua_tonumber(L, 2);
-        matrix* res = new matrix(mul_mat_num(*matl, num));
-        void* mat_pp = lua_newuserdata(L, sizeof(void*));
-        *(matrix**)mat_pp = res;
-        create_mat_table(L);
-        return 1;
-    }else if(luaL_testudata(L, 2, "vec")){
-        vector* vecr = *(vector**)lua_touserdata(L, 2);
-        vector* res = new vector(mul_mat_vec(*matl, *vecr));
+    //如果第一个参数是vec
+    if(luaL_testudata (L, 1, "mat")&&luaL_testudata(L, 2, "vec")){
+        matrix* mat = *(matrix**)lua_touserdata(L, 1);
+        vector* vec = *(vector**)lua_touserdata(L, 2);
+        vector* res = new vector(mul_mat_vec(*mat, *vec));
         void* vec_pp = lua_newuserdata(L, sizeof(void*));
         *(vector**)vec_pp = res;
         create_vec_table(L);
         return 1;
-    }else if(luaL_testudata(L, 2, "mat")){
+    }else if(luaL_testudata (L, 1, "vec")&&luaL_testudata(L, 2, "mat")){
+        vector* vec = *(vector**)lua_touserdata(L, 1);
+        matrix* mat = *(matrix**)lua_touserdata(L, 2);
+        vector* res = new vector(mul_vec_mat(*vec, *mat));
+        void* vec_pp = lua_newuserdata(L, sizeof(void*));
+        *(vector**)vec_pp = res;
+        create_vec_table(L);
+        return 1;
+    }else if(luaL_testudata (L, 1, "mat")&&luaL_testudata(L, 2, "mat")){
+        matrix* matl = *(matrix**)lua_touserdata(L, 1);
         matrix* matr = *(matrix**)lua_touserdata(L, 2);
         matrix* res = new matrix(mul_mat_mat(*matl, *matr));
+        void* mat_pp = lua_newuserdata(L, sizeof(void*));
+        *(matrix**)mat_pp = res;
+        create_mat_table(L);
+        return 1;
+    }else if(luaL_testudata (L, 1, "mat")&&lua_type(L,2)==LUA_TNUMBER){
+        matrix* mat = *(matrix**)lua_touserdata(L, 1);
+        double num = lua_tonumber(L, 2);
+        matrix* res = new matrix(mul_mat_num(*mat, num));
+        void* mat_pp = lua_newuserdata(L, sizeof(void*));
+        *(matrix**)mat_pp = res;
+        create_mat_table(L);
+        return 1;
+    }else if(lua_type(L,1)==LUA_TNUMBER&&luaL_testudata(L, 2, "mat")){
+        double num = lua_tonumber(L, 1);
+        matrix* mat = *(matrix**)lua_touserdata(L, 2);
+        matrix* res = new matrix(mul_mat_num(*mat, num));
         void* mat_pp = lua_newuserdata(L, sizeof(void*));
         *(matrix**)mat_pp = res;
         create_mat_table(L);

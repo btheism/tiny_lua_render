@@ -11,9 +11,12 @@ m3=linear.inverse(m1)
 print(m1)
 print(m2)
 print(m3)
-m1=linear.new_mat("move", 1.0, 2.0, 3.0)
+m1=linear.new_mat("move", linear.new_vec(3,{1.0, 2.0, 3.0}))
 print(m1)
-m1=linear.new_mat("rotate", math.rad(-55.0), 1.0, 0.0, 0.0)
+m1=linear.new_mat("rotate", math.rad(-55.0), linear.new_vec(3,{1.0, 0.0, 0.0}))
 print(m1)
-m1=linear.new_mat("lookat", 0.0, 0.0, 3.0, 0.0, 0.5, 0.0, 1.0, 1.0, 0.0)
+m1=linear.new_mat("lookat",
+linear.new_vec(3,{0.0, 0.0, 3.0}),
+linear.new_vec(3,{0.0, 0.5, 0.0}),
+linear.new_vec(3,{1.0, 1.0, 0.0}))
 print(m1)

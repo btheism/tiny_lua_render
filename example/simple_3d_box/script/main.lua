@@ -15,7 +15,7 @@ camera0.clip={"persp", math.rad(45), 1.0, 0.1, 100}
 
 function box:draw(camera)
     local final_mat =
-    linear.new_mat(unpack(camera0.clip))
+    linear.new_mat(unpack(camera.clip))
     *linear.new_mat("move", camera.pos)
     *linear.new_mat("move", self.pos)
     *linear.new_mat("rotate", unpack(self.rotate))

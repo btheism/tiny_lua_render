@@ -60,6 +60,8 @@ int transpose_mat_lua(lua_State* L);
 int index_mat_lua(lua_State* L);
 int modify_mat_lua(lua_State* L);
 
+vector mul_vec_mat(const vector& vec, const matrix& mat);
+vector mul_mat_vec(const matrix& mat, const vector& vec);
 int new_vec(lua_State* L);
 int vec_to_string(lua_State* L);
 int delete_vec(lua_State* L);
