@@ -30,7 +30,7 @@ public:
         glUniform1f(uni_loc, value);
     }
     void setMat(const char* name, const matrix &mat, GLboolean transpose) const;
-    void setVec(const char* name, const matrix &mat) const;
+    void setVec(const char* name, const vector &vec);
 
     private:
     static void checkCompileErrors(unsigned int shader, const char* type);

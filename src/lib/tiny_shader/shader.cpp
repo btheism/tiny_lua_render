@@ -82,15 +82,15 @@ void shader::setMat(const char* name, const matrix &mat, GLboolean transpose) co
     (**setmat_func_table.at((mat.col<<8)+mat.row))(uni_loc, 1, transpose, mat.content);
 }
 
-void shader::setVec(const char* name, const matrix &mat) const{
+void shader::setVec(const char* name, const vector &vec) const{
     int uni_loc = glGetUniformLocation(ID, name);
     if(uni_loc==-1){
         fatal("cannot find uniform %s in shader\n", name)
     }
-    if(std::min(mat.col,mat.row)!=1||!setvec_func_table.count(std::max(mat.col,mat.row))){
-        fatal("do not support set vector of size (%zu, %zu) in shader\n", mat.col, mat.row)
+    if(!setvec_func_table.count(vec.size)){
+        fatal("do not support set vector of size %zu in shader\n", vec.size)
     }
-    (**setvec_func_table.at(std::max(mat.col,mat.row)))(uni_loc, 1, mat.content);
+    (**setvec_func_table.at(vec.size))(uni_loc, 1, vec.content);
 }
 
 //该函数应配合new_shader使用,设置栈顶上的元素的元表为shader
@@ -177,8 +177,8 @@ int set_shader_vec(lua_State* L){
     int par_num = lua_gettop(L);
     shader* current_shader = *(shader**)(luaL_checkudata(L, 1, "shader"));
     const char* name = luaL_checkstring(L, 2);
-    matrix* mat = *(matrix**)(luaL_checkudata(L, 1, "mat"));
+    vector* vec = *(vector**)(luaL_checkudata(L, 1, "vec"));
     GLboolean transpose = false;
-    current_shader->setVec(name, *mat);
+    current_shader->setVec(name, *vec);
     return 0;
 }
