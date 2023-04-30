@@ -320,8 +320,8 @@ matrix lookat_mat(const vector& campos, const vector& target, const vector& worl
         fatal("create lookat matrix with vectors of size %zu, %zu, %zu\n", campos.size, target.size, world_up.size)
     }
     vector cam_d = normalize_vec(sub_vec_vec(campos,target));
-    vector norm_world_up = normalize_vec(world_up);
-    vector cam_r = cross_vec_vec(norm_world_up,cam_d);
+    vector cam_r = normalize_vec(cross_vec_vec(world_up,cam_d));
+    //d和r一定正交,因此这里不用normalize
     vector cam_up = cross_vec_vec(cam_d,cam_r);
     //该矩阵未考虑相机的平移
     matrix look_rotate(4,4);
