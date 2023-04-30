@@ -10,5 +10,7 @@ bin/test/glfw_callback
 bin/test/glfw_getkey
 bin/test/vao_vbo
 bin/test/glm_matrix
+bin/test/glm_ortho_etc
+bin/test/tiny_matrix_behavior
 bin/main/render
 scripts/__pycache__
