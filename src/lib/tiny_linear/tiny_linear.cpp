@@ -11,6 +11,7 @@ const luaL_Reg tiny_linear_func[] = {
     //关于向量的函数
     {"new_vec", new_vec},
     {"vec_size", get_vec_size},
+    {"norm_vec", normalize_vec_lua},
 
     //关于角度的函数
     {"radians", degree_to_radians},

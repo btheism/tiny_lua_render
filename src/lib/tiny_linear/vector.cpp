@@ -1,3 +1,5 @@
+#include <luajit-2.1/lauxlib.h>
+#include <luajit-2.1/lua.h>
 #include <tiny_linear.hpp>
 
 vector::vector(const vector & mirror){
@@ -46,6 +48,26 @@ vector cross_vec_vec(const vector& lvec, const vector& rvec){
     res.content[0] = lvec.content[1]*rvec.content[2]-lvec.content[2]*rvec.content[1];
     res.content[1] = lvec.content[2]*rvec.content[0]-lvec.content[0]*rvec.content[2];
     res.content[2] = lvec.content[0]*rvec.content[1]-lvec.content[1]*rvec.content[0];
+    return res;
+}
+
+vector mul_vec_num(const vector& vec, double num){
+    vector res(vec);
+    for(size_t i=0; i<res.size; i++){
+        res.content[i]*=num;
+    }
+    return res;
+}
+
+vector mul_vec_mat(const vector& vec, const matrix& mat){
+    if(vec.size!=mat.row){
+        fatal("mul vector of size %zu to matrix of size (%zu, %zu)\n", vec.size, mat.col, mat.row);
+    }
+    vector res(mat.col);
+    for(size_t c=0; c<mat.col; c++){
+        for(size_t r=0; r<mat.row; r++)
+        res.content[c]+=vec.content[r]*mat.content[c*mat.row+r];
+    }
     return res;
 }
 
@@ -198,10 +220,26 @@ int sub_vec_lua(lua_State* L){
 
 int mul_vec_lua(lua_State* L){
     vector* vecl = *(vector**)(luaL_checkudata(L, 1, "vec"));
-    vector* vecr = *(vector**)(luaL_checkudata(L, 2, "vec"));
-    double res = dot_vec_vec(*vecl, *vecl);
-    lua_pushnumber(L, res);
-    return 1;
+    if(lua_type(L,2)==LUA_TNUMBER){
+        //向量乘数
+        double num = lua_tonumber(L, 2);
+        vector* res = new vector(mul_vec_num(*vecl, num));
+        void* vec_pp = lua_newuserdata(L, sizeof(void*));
+        *(vector**)vec_pp = res;
+        create_vec_table(L);
+        return 1;
+    }else if(luaL_testudata (L, 2, "vec")){
+        vector* vecr = *(vector**)lua_touserdata(L, 2);
+        double res = dot_vec_vec(*vecl, *vecl);
+        lua_pushnumber(L, res);
+        return 1;
+    }else if(luaL_testudata (L, 2, "mat")){
+        matrix* matr = *(matrix**)lua_touserdata(L, 2);
+        vector* res = new vector(mul_vec_mat(*vecl, *matr));
+        return 1;
+    }else{
+        return luaL_error(L, "mul vector with unsupported type");
+    }
 };
 
 int cross_vec_lua(lua_State* L){
@@ -213,6 +251,15 @@ int cross_vec_lua(lua_State* L){
     create_vec_table(L);
     return 1;
 };
+
+int normalize_vec_lua(lua_State* L){
+    vector* vec = *(vector**)(luaL_checkudata(L, 1, "vec"));
+    vector* res = new vector(normalize_vec(*vec));
+    void* vec_pp = lua_newuserdata(L, sizeof(void*));
+    *(vector**)vec_pp = res;
+    create_vec_table(L);
+    return 1;
+}
 
 int index_vec_lua(lua_State* L){
     vector* vec = *(vector**)(luaL_checkudata(L, 1, "vec"));

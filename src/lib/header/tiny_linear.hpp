@@ -41,6 +41,8 @@ public:
 };
 
 void luaopen_tiny_linearlib(lua_State *L);
+void create_vec_table(lua_State* L);
+void create_mat_table(lua_State* L);
 
 //不带lua后缀的lua函数是对C++成员函数的封装
 int new_mat(lua_State* L);
@@ -68,7 +70,7 @@ int sub_vec_lua(lua_State* L);
 int mul_vec_lua(lua_State* L);
 int dot_vec_lua(lua_State* L);
 int neg_vec_lua(lua_State* L);
-int mul_vec_lua(lua_State* L);
+int normalize_vec_lua(lua_State* L);
 int cross_vec_lua(lua_State* L);
 int index_vec_lua(lua_State* L);
 int modify_vec_lua(lua_State* L);

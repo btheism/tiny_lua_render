@@ -186,6 +186,26 @@ matrix mul_mat_mat(const matrix& matl, const matrix& matr){
     return res;
 }
 
+matrix mul_mat_num(const matrix& mat, double num){
+    matrix res(mat);
+    for(size_t i=0; i<res.row*res.col; i++){
+        res.content[i]*=num;
+    }
+    return res;
+}
+
+vector mul_mat_vec(const matrix& mat, vector vec){
+    if(vec.size!=mat.col){
+        fatal("mul matrix of size (%zu, %zu) to vector of size %zu to \n",mat.col, mat.row, vec.size);
+    }
+    vector res(mat.row);
+    for(size_t r=0; r<mat.row; r++){
+        for(size_t c=0; c<mat.col; c++)
+        res.content[r]+=vec.content[c]*mat.content[c*mat.row+r];
+    }
+    return res;
+}
+
 //以下3个内联函数用于求解逆矩阵
 //r1,r2是矩阵的行,以下函数对矩阵进行初等行变换,假设行序号以0开始
 static inline void swap_row(const matrix& mat, size_t r1, size_t r2){
@@ -296,6 +316,9 @@ matrix rotate_mat(float angle, const vector& axis){
 }
 
 matrix lookat_mat(const vector& campos, const vector& target, const vector& world_up){
+    if(campos.size!=3||target.size!=3||world_up.size!=3){
+        fatal("create lookat matrix with vectors of size %zu, %zu, %zu\n", campos.size, target.size, world_up.size)
+    }
     vector cam_d = normalize_vec(sub_vec_vec(campos,target));
     vector norm_world_up = normalize_vec(world_up);
     vector cam_r = cross_vec_vec(norm_world_up,cam_d);
@@ -520,35 +543,32 @@ int sub_mat_lua(lua_State* L){
 
 int mul_mat_lua(lua_State* L){
     matrix* matl = *(matrix**)(luaL_checkudata(L, 1, "mat"));
-    matrix* matr = *(matrix**)(luaL_checkudata(L, 2, "mat"));
-    matrix* res = new matrix(mul_mat_mat(*matl, *matr));
-    void* mat_pp = lua_newuserdata(L, sizeof(void*));
-    *(matrix**)mat_pp = res;
-    create_mat_table(L);
-    return 1;
+    if(lua_type(L,2)==LUA_TNUMBER){
+        //向量乘数
+        float num = lua_tonumber(L, 2);
+        matrix* res = new matrix(mul_mat_num(*matl, num));
+        void* mat_pp = lua_newuserdata(L, sizeof(void*));
+        *(matrix**)mat_pp = res;
+        create_mat_table(L);
+        return 1;
+    }else if(luaL_testudata(L, 2, "vec")){
+        vector* vecr = *(vector**)lua_touserdata(L, 2);
+        vector* res = new vector(mul_mat_vec(*matl, *vecr));
+        void* vec_pp = lua_newuserdata(L, sizeof(void*));
+        *(vector**)vec_pp = res;
+        create_vec_table(L);
+        return 1;
+    }else if(luaL_testudata(L, 2, "mat")){
+        matrix* matr = *(matrix**)lua_touserdata(L, 2);
+        matrix* res = new matrix(mul_mat_mat(*matl, *matr));
+        void* mat_pp = lua_newuserdata(L, sizeof(void*));
+        *(matrix**)mat_pp = res;
+        create_mat_table(L);
+        return 1;
+    }else{
+        return luaL_error(L, "mul mat with unsupported type");
+    }
 };
-
-/*
-int mul_mat_num_lua(lua_State* L){
-    matrix* matl = *(matrix**)(luaL_checkudata(L, 1, "mat"));
-    matrix* matr = *(matrix**)(luaL_checkudata(L, 2, "mat"));
-    matrix* res = new matrix(mul_matrix(*matl, *matr));
-    void* mat_pp = lua_newuserdata(L, sizeof(void*));
-    *(matrix**)mat_pp = res;
-    create_matrix_table(L);
-    return 1;
-};
-
-int mul_mat_vec_lua(lua_State* L){
-    matrix* matl = *(matrix**)(luaL_checkudata(L, 1, "mat"));
-    matrix* matr = *(matrix**)(luaL_checkudata(L, 2, "mat"));
-    matrix* res = new matrix(mul_matrix(*matl, *matr));
-    void* mat_pp = lua_newuserdata(L, sizeof(void*));
-    *(matrix**)mat_pp = res;
-    create_matrix_table(L);
-    return 1;
-};
-*/
 
 int inverse_mat_lua(lua_State* L){
     matrix* mat = *(matrix**)(luaL_checkudata(L, 1, "mat"));
