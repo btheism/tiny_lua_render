@@ -1,23 +1,24 @@
 box={}
 box.shader = require("script/loc_shader")
 box.mesh = require("script/box_mesh")
+box.camera = require("script/camera")
 tex_keqing = texture.new_texture_2d("image/keqing.jpg", "rgb", "rgba", "repeat", "repeat", "linear", "linear")
 tex_keli = texture.new_texture_2d("image/keli.jpg", "rgb", "rgba", "repeat", "repeat", "linear", "linear")
 box.tex=tex_keqing
 
-box.pos = linear.new_vec(3, {0,0,-3})
-box.rotate = {math.rad(45), linear.new_vec(3, {1,2,3})}
+box.pos = {0,0,-3}
+box.rotate = {math.rad(45),1,2,3}
 
 camera0={}
-camera0.pos=linear.new_vec(3, {0,0,0})
-camera0.clip={"persp", math.rad(45), 1.0, 0.1, 100}
+camera0.pos={0,0,0}
+camera0.clip={"persp", math.rad(45),1.0,0.1,100}
 
 
 function box:draw(camera)
     local final_mat =
     linear.new_mat(unpack(camera0.clip))
-    *linear.new_mat("move", camera.pos)
-    *linear.new_mat("move", self.pos)
+    *linear.new_mat("move", unpack(camera.pos))
+    *linear.new_mat("move", unpack(self.pos))
     *linear.new_mat("rotate", unpack(self.rotate))
     box.shader:set_mat("trans", final_mat)
     box.tex:active(0)
@@ -101,3 +102,4 @@ do
     last_time = current_time
 
 end
+

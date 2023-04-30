@@ -10,7 +10,8 @@ int main(void){
     auto m2 = glm::perspective(glm::radians(54.0f), 16.0f/9.0f, 0.1f, 100.0f);
     auto e = glm::mat4(1.0f);
     auto m3 = glm::translate(e, glm::vec3(0.0f, 0.0f, -3.0f));
-    auto m4 = glm::rotate(e, glm::radians(-55.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+    auto m4 = glm::rotate(e, glm::radians(-55.0f), glm::vec3(2.0f, 0.0f, 0.0f));
+    auto m5 = glm::lookAt(glm::vec3(0.0f, 0.0f, 3.0f),glm::vec3(0.0f, 0.5f, 0.0f),glm::vec3(1.0f, 1.0f, 0.0f));
 
     std::cout<<"m1:"<<std::endl;
     std::cout<<mat2str<glm::mat4,4,4>(m1)<<std::endl;
@@ -20,5 +21,7 @@ int main(void){
     std::cout<<mat2str<glm::mat4,4,4>(m3)<<std::endl;
     std::cout<<"m4:"<<std::endl;
     std::cout<<mat2str<glm::mat4,4,4>(m4)<<std::endl;
+    std::cout<<"m5:"<<std::endl;
+    std::cout<<mat2str<glm::mat4,4,4>(m5)<<std::endl;
     //std::cout<<vec2str<glm::vec4,4>(v1*m1)<<std::endl;
 }

@@ -23,21 +23,61 @@ public:
     }
 };
 
+class vector{
+public:
+    size_t size;
+    float* content;
+    vector(const vector & mirror);
+    vector(vector && mirror);
+    vector(size_t len);
+    vector(size_t len, const std::vector<float>& list);
+    std::string tostr(void);
+    ~vector(void){
+        //content可能被移动到了别的矩阵
+        if(content!=nullptr){
+            delete []content;
+        }
+    }
+};
+
 void luaopen_tiny_linearlib(lua_State *L);
 
 //不带lua后缀的lua函数是对C++成员函数的封装
-int new_matrix(lua_State* L);
-int matrix_to_string(lua_State* L);
-int delete_matrix(lua_State* L);
-int get_matrix_col(lua_State* L);
-int get_matrix_row(lua_State* L);
+int new_mat(lua_State* L);
+int mat_to_string(lua_State* L);
+int delete_mat(lua_State* L);
+int get_mat_col(lua_State* L);
+int get_mat_row(lua_State* L);
 
 //带lua后缀的lua函数是对C++非成员函数的封装
-int add_matrix_lua(lua_State* L);
-int sub_matrix_lua(lua_State* L);
-int mul_matrix_lua(lua_State* L);
-int inverse_matrix_lua(lua_State* L);
-int transpose_matrix_lua(lua_State* L);
+int add_mat_lua(lua_State* L);
+int sub_mat_lua(lua_State* L);
+int mul_mat_lua(lua_State* L);
+int inverse_mat_lua(lua_State* L);
+int transpose_mat_lua(lua_State* L);
+int index_mat_lua(lua_State* L);
+int modify_mat_lua(lua_State* L);
+
+int new_vec(lua_State* L);
+int vec_to_string(lua_State* L);
+int delete_vec(lua_State* L);
+int get_vec_size(lua_State* L);
+
+int add_vec_lua(lua_State* L);
+int sub_vec_lua(lua_State* L);
+int mul_vec_lua(lua_State* L);
+int dot_vec_lua(lua_State* L);
+int neg_vec_lua(lua_State* L);
+int mul_vec_lua(lua_State* L);
+int cross_vec_lua(lua_State* L);
+int index_vec_lua(lua_State* L);
+int modify_vec_lua(lua_State* L);
+
+vector normalize_vec(const vector& vec);
+vector neg_vec(const vector& vec);
+float vec_len(const vector& vec);
+vector cross_vec_vec(const vector& lvec, const vector& rvec);
+vector sub_vec_vec(const vector& lvec, const vector& rvec);
 
 //这是一些关于角度的函数,其实也可以直接调用lua的math库中的函数
 int degree_to_radians(lua_State* L);
