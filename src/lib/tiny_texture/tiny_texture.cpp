@@ -1,7 +1,8 @@
 #include <tiny_texture.hpp>
 
 const luaL_Reg tiny_texture_func[] = {
-    {"new_texture_2d", new_texture_2d},
+    {"new_texture_2d", new_texture_2d_lua},
+    {"new_texture_cube", new_texture_cube_lua},//立方体贴图
     {nullptr, nullptr}
 };
 

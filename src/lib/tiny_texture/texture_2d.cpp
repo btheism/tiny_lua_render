@@ -1,5 +1,4 @@
 #include<tiny_texture.hpp>
-#include<tiny_image.hpp>
 
 texture_2d::texture_2d(const char* image_path, GLint image_mode, GLint texture_mode, GLint swrap, int twrap, GLint min_filter, GLint max_filter){
     glGenTextures(1, &ID);
@@ -28,8 +27,8 @@ void create_texture_2d_table(lua_State* L){
     if(luaL_newmetatable(L, "texture_2d")){
         static const luaL_Reg functions[] =
         {
-            {"__gc", delete_texture_2d},
-            {"active", active_texture_2d},
+            {"__gc", delete_texture_2d_lua},
+            {"active", active_texture_2d_lua},
             {nullptr, nullptr}
         };
         //这个函数把上面的函数填入表
@@ -44,7 +43,7 @@ void create_texture_2d_table(lua_State* L){
     return;
 }
 
-int new_texture_2d(lua_State* L)
+int new_texture_2d_lua(lua_State* L)
 {
     const char* image_path = luaL_checkstring(L, 1);
 
@@ -85,14 +84,14 @@ int new_texture_2d(lua_State* L)
     return 1;
 }
 
-int delete_texture_2d(lua_State* L){
+int delete_texture_2d_lua(lua_State* L){
     delete *(texture_2d**)(luaL_checkudata(L, 1, "texture_2d"));
     return 0;
 }
 
-int active_texture_2d(lua_State* L){
-    texture_2d* current_texture_2d =  *(texture_2d**)(luaL_checkudata(L, 1, "texture_2d"));
+int active_texture_2d_lua(lua_State* L){
+    texture_2d* current_texture =  *(texture_2d**)(luaL_checkudata(L, 1, "texture_2d"));
     int slot = luaL_checkinteger(L, 2);
-    current_texture_2d->active(slot);
+    current_texture->active(slot);
     return 0;
 }

@@ -34,8 +34,10 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 */
 
 void init(const char* window_title, int window_width, int window_height){
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    //版本高一些无所谓
+    //例如只有4.0及以上才支持对立方体贴图glGenerateMipmap
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     if(!glfwInit()){
         fatal("Failed to initialize glfw\n");

@@ -2,7 +2,7 @@ local camera={}
 camera.pos=linear.new_vec(3, {0.0, 0.0, 6.0})
 camera.front=linear.new_vec(3, {0.0, 0.0, -1.0})
 camera.worldup=linear.new_vec(3, {0.0, 1.0, 0.0})
-camera.right=camera.front^camera.worldup
+camera.right=linear.norm_vec(camera.front^camera.worldup)
 camera.up=camera.right^camera.front
 --相机的两个角
 camera.yaw=math.rad(-90.0)
@@ -23,7 +23,7 @@ function camera:update()
             math.sin(self.pitch);
             math.cos(self.pitch) * math.sin(self.yaw);
         }))
-    self.right=self.front^self.worldup
+    self.right=linear.norm_vec(self.front^self.worldup)
     self.up=self.right^self.front
     self.look=
     linear.persp_mat(self.zoom, 1.0, 0.1, 100)
