@@ -2,15 +2,23 @@
 
 const luaL_Reg tiny_linear_func[] = {
     //关于矩阵的函数
-    {"new_mat", new_mat},
+    {"id_mat", id_mat_lua},
     {"inverse", inverse_mat_lua},
     {"trans", transpose_mat_lua},
-    {"mat_col", get_mat_col},
-    {"mat_row", get_mat_row},
+    {"get_col", get_mat_col_lua},
+    {"get_row", get_mat_row_lua},
+    {"col_mat", col_mat_lua},
+    {"row_mat", row_mat_lua},
+    {"ortho_mat", ortho_mat_lua},
+    {"persp_mat", perspective_mat_lua},
+    {"move_mat", move_mat_lua},
+    {"rotate_mat", rotate_mat_lua},
+    {"lookat_mat", lookat_mat_lua},
+    {"scale_mat", scale_mat_lua},
 
     //关于向量的函数
     {"new_vec", new_vec},
-    {"vec_size", get_vec_size},
+    {"get_size", get_vec_size_lua},
     {"norm_vec", normalize_vec_lua},
 
     //关于角度的函数

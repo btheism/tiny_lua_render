@@ -133,8 +133,8 @@ void create_vec_table(lua_State* L){
     if(luaL_newmetatable(L, "vec")){
         static const luaL_Reg functions[] =
         {
-            {"__gc", delete_vec},
-            {"__tostring", vec_to_string},
+            {"__gc", delete_vec_lua},
+            {"__tostring", vec_to_string_lua},
             {"__unm", neg_vec_lua},
             {"__add", add_vec_lua},
             {"__sub", sub_vec_lua},
@@ -156,8 +156,8 @@ int new_vec(lua_State* L){
     size_t size = luaL_checkinteger(L, 1);
     luaL_checktype(L, 2, LUA_TTABLE);
     size_t list_len = lua_objlen(L,2);
-    if(list_len<size){
-        luaL_error(L, "fail to create vector, expect %zu elements, only get %zu", size, list_len);
+    if(list_len!=size){
+        luaL_error(L, "fail to create vector, expect %zu elements, but get get %zu", size, list_len);
     }
     std::vector<float> list(size);
     for(int i=1; i<=size; i++){
@@ -171,18 +171,18 @@ int new_vec(lua_State* L){
     return 1;
 };
 
-int delete_vec(lua_State* L){
+int delete_vec_lua(lua_State* L){
     delete *(vector**)(luaL_checkudata(L, 1, "vec"));
     return 0;
 };
 
-int vec_to_string(lua_State* L){
+int vec_to_string_lua(lua_State* L){
     vector* vec = *(vector**)(luaL_checkudata(L, 1, "vec"));
     lua_pushstring(L, vec->tostr().c_str());
     return 1;
 };
 
-int get_vec_size(lua_State* L){
+int get_vec_size_lua(lua_State* L){
     vector* vec = *(vector**)(luaL_checkudata(L, 1, "vec"));
     lua_pushinteger(L, vec->size);
     return 1;
@@ -283,7 +283,7 @@ int normalize_vec_lua(lua_State* L){
 int index_vec_lua(lua_State* L){
     vector* vec = *(vector**)(luaL_checkudata(L, 1, "vec"));
     size_t index = luaL_checkinteger(L, 2);
-    if(index>vec->size){
+    if(index>vec->size||index<1){
         luaL_error(L, "access vector index %zu, but vector size is %zu", index, vec->size);
     }
     lua_pushnumber(L, vec->content[index-1]);
@@ -293,7 +293,7 @@ int index_vec_lua(lua_State* L){
 int modify_vec_lua(lua_State* L){
     vector* vec = *(vector**)(luaL_checkudata(L, 1, "vec"));
     size_t index = luaL_checkinteger(L, 2);
-    if(index>vec->size){
+    if(index>vec->size||index<1){
         luaL_error(L, "modify vector index %zu, but vector size is %zu", index, vec->size);
     }
     vec->content[index-1]=luaL_checknumber(L, 3);;

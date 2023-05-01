@@ -177,7 +177,7 @@ int set_shader_vec(lua_State* L){
     int par_num = lua_gettop(L);
     shader* current_shader = *(shader**)(luaL_checkudata(L, 1, "shader"));
     const char* name = luaL_checkstring(L, 2);
-    vector* vec = *(vector**)(luaL_checkudata(L, 1, "vec"));
+    vector* vec = *(vector**)(luaL_checkudata(L, 3, "vec"));
     GLboolean transpose = false;
     current_shader->setVec(name, *vec);
     return 0;

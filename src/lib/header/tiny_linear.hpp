@@ -44,14 +44,21 @@ void luaopen_tiny_linearlib(lua_State *L);
 void create_vec_table(lua_State* L);
 void create_mat_table(lua_State* L);
 
-//不带lua后缀的lua函数是对C++成员函数的封装
-int new_mat(lua_State* L);
-int mat_to_string(lua_State* L);
-int delete_mat(lua_State* L);
-int get_mat_col(lua_State* L);
-int get_mat_row(lua_State* L);
+int mat_to_string_lua(lua_State* L);
+int delete_mat_lua(lua_State* L);
+int get_mat_col_lua(lua_State* L);
+int get_mat_row_lua(lua_State* L);
 
-//带lua后缀的lua函数是对C++非成员函数的封装
+int id_mat_lua(lua_State* L);
+int col_mat_lua(lua_State* L);
+int row_mat_lua(lua_State* L);
+int ortho_mat_lua(lua_State* L);
+int perspective_mat_lua(lua_State* L);
+int move_mat_lua(lua_State* L);
+int rotate_mat_lua(lua_State* L);
+int lookat_mat_lua(lua_State* L);
+int scale_mat_lua(lua_State* L);
+
 int add_mat_lua(lua_State* L);
 int sub_mat_lua(lua_State* L);
 int mul_mat_lua(lua_State* L);
@@ -63,9 +70,9 @@ int modify_mat_lua(lua_State* L);
 vector mul_vec_mat(const vector& vec, const matrix& mat);
 vector mul_mat_vec(const matrix& mat, const vector& vec);
 int new_vec(lua_State* L);
-int vec_to_string(lua_State* L);
-int delete_vec(lua_State* L);
-int get_vec_size(lua_State* L);
+int vec_to_string_lua(lua_State* L);
+int delete_vec_lua(lua_State* L);
+int get_vec_size_lua(lua_State* L);
 
 int add_vec_lua(lua_State* L);
 int sub_vec_lua(lua_State* L);

@@ -339,14 +339,23 @@ matrix lookat_mat(const vector& campos, const vector& target, const vector& worl
     return mul_mat_mat(look_rotate, move_mat(neg_vec(campos)));
 }
 
+matrix scale_mat(float x, float y, float z){
+    matrix res(4,4);
+    res.content[0]=x;
+    res.content[5]=y;
+    res.content[10]=z;
+    res.content[15]=1.0;
+    return res;
+}
+
 //该函数应配合new_mat使用,设置栈顶上的元素的元表为mesh
 void create_mat_table(lua_State* L){
     //该函数可以避免元表被重复注册,并把元表放在栈顶
     if(luaL_newmetatable(L, "mat")){
         static const luaL_Reg functions[] =
         {
-            {"__gc", delete_mat},
-            {"__tostring", mat_to_string},
+            {"__gc", delete_mat_lua},
+            {"__tostring", mat_to_string_lua},
             {"__add", add_mat_lua},
             {"__mul", mul_mat_lua},
             {"__index",index_mat_lua},
@@ -366,29 +375,28 @@ void create_mat_table(lua_State* L){
     return;
 }
 
-//这些形如new_*_matrix函数需要配合new_matrix使用,new_matrix根据传入的第一个字符串决定调用哪个函数,参数表从2开始
-int new_id_mat(lua_State* L){
-    size_t len = luaL_checkinteger(L, 2);
-    float diag = luaL_checknumber(L, 3);
+int id_mat_lua(lua_State* L){
+    size_t len = luaL_checkinteger(L, 1);
+    float diag = luaL_checknumber(L, 2);
     void* mat_pp = lua_newuserdata(L, sizeof(void*));
     *(matrix**)mat_pp = new matrix(diag_mat(len, diag));
     create_mat_table(L);
     return 1;
 };
 
-int new_col_mat(lua_State* L){
-    size_t col = luaL_checkinteger(L, 2);
-    size_t row = luaL_checkinteger(L, 3);
+int col_mat_lua(lua_State* L){
+    size_t col = luaL_checkinteger(L, 1);
+    size_t row = luaL_checkinteger(L, 2);
     size_t len = col*row;
-    luaL_checktype(L, 4, LUA_TTABLE);
-    size_t list_len = lua_objlen(L,4);
-    if(list_len<len){
-        luaL_error(L, "fail to create matrix, expect %zu elements, only get %zu", len, list_len);
+    luaL_checktype(L, 3, LUA_TTABLE);
+    size_t list_len = lua_objlen(L,3);
+    if(list_len!=len){
+        luaL_error(L, "fail to create matrix, expect %zu elements, but get %zu", len, list_len);
     }
     std::vector<float> list(len);
     for(int i=1; i<=len; i++){
         lua_pushinteger(L, i);
-        lua_gettable(L, 4);
+        lua_gettable(L, 3);
         list[i-1]=luaL_checknumber(L, -1);
     }
     void* mat_pp = lua_newuserdata(L, sizeof(void*));
@@ -397,19 +405,19 @@ int new_col_mat(lua_State* L){
     return 1;
 };
 
-int new_row_mat(lua_State* L){
-    size_t col = luaL_checkinteger(L, 2);
-    size_t row = luaL_checkinteger(L, 3);
+int row_mat_lua(lua_State* L){
+    size_t col = luaL_checkinteger(L, 1);
+    size_t row = luaL_checkinteger(L, 2);
     size_t len = col*row;
-    luaL_checktype(L, 4, LUA_TTABLE);
-    size_t list_len = lua_objlen(L,4);
+    luaL_checktype(L, 3, LUA_TTABLE);
+    size_t list_len = lua_objlen(L,3);
     if(list_len<len){
         luaL_error(L, "fail to create matrix, expect %zu elements, only get %zu", len, list_len);
     }
     std::vector<float> list(len);
     for(int i=1; i<=len; i++){
         lua_pushinteger(L, i);
-        lua_gettable(L, 4);
+        lua_gettable(L, 3);
         list[i-1]=luaL_checknumber(L, -1);
     }
     void* mat_pp = lua_newuserdata(L, sizeof(void*));
@@ -418,24 +426,24 @@ int new_row_mat(lua_State* L){
     return 1;
 };
 
-int new_ortho_mat(lua_State* L){
-    double left = luaL_checknumber(L, 2);
-    double right = luaL_checkinteger(L, 3);
-    double top = luaL_checkinteger(L, 4);
-    double bottom = luaL_checkinteger(L, 5);
-    double near = luaL_checkinteger(L, 6);
-    double far = luaL_checkinteger(L, 7);
+int ortho_mat_lua(lua_State* L){
+    double left = luaL_checknumber(L, 1);
+    double right = luaL_checkinteger(L, 2);
+    double top = luaL_checkinteger(L, 3);
+    double bottom = luaL_checkinteger(L, 4);
+    double near = luaL_checkinteger(L, 5);
+    double far = luaL_checkinteger(L, 6);
     void* mat_pp = lua_newuserdata(L, sizeof(void*));
     *(matrix**)mat_pp = new matrix(ortho_mat(left, right, top, bottom, near, far));
     create_mat_table(L);
     return 1;
 };
 
-int new_perspective_mat(lua_State* L){
-    double fov = luaL_checknumber(L, 2);
-    double aspect = luaL_checknumber(L, 3);
-    double near = luaL_checknumber(L, 4);
-    double far = luaL_checknumber(L, 5);
+int perspective_mat_lua(lua_State* L){
+    double fov = luaL_checknumber(L, 1);
+    double aspect = luaL_checknumber(L, 2);
+    double near = luaL_checknumber(L, 3);
+    double far = luaL_checknumber(L, 4);
     void* mat_pp = lua_newuserdata(L, sizeof(void*));
     //fov:field of view,视野
     *(matrix**)mat_pp = new matrix(perspective_mat(fov, aspect, near, far));
@@ -443,8 +451,8 @@ int new_perspective_mat(lua_State* L){
     return 1;
 };
 
-int new_move_mat(lua_State* L){
-    vector* pos = *(vector**)(luaL_checkudata(L, 2, "vec"));
+int move_mat_lua(lua_State* L){
+    vector* pos = *(vector**)(luaL_checkudata(L, 1, "vec"));
     matrix* res = new matrix(move_mat(*pos));
     void* mat_pp = lua_newuserdata(L, sizeof(void*));
     *(matrix**)mat_pp = res;
@@ -452,9 +460,9 @@ int new_move_mat(lua_State* L){
     return 1;
 }
 
-int new_rotate_mat(lua_State* L){
-    double angle = luaL_checknumber(L, 2);
-    vector* axis = *(vector**)(luaL_checkudata(L, 3, "vec"));
+int rotate_mat_lua(lua_State* L){
+    double angle = luaL_checknumber(L, 1);
+    vector* axis = *(vector**)(luaL_checkudata(L, 2, "vec"));
     matrix* res = new matrix(rotate_mat(angle, *axis));
     void* mat_pp = lua_newuserdata(L, sizeof(void*));
     *(matrix**)mat_pp = res;
@@ -462,10 +470,10 @@ int new_rotate_mat(lua_State* L){
     return 1;
 }
 
-int new_lookat_mat(lua_State* L){
-    vector* campos = *(vector**)(luaL_checkudata(L, 2, "vec"));
-    vector* target = *(vector**)(luaL_checkudata(L, 3, "vec"));
-    vector* worldup = *(vector**)(luaL_checkudata(L, 4, "vec"));
+int lookat_mat_lua(lua_State* L){
+    vector* campos = *(vector**)(luaL_checkudata(L, 1, "vec"));
+    vector* target = *(vector**)(luaL_checkudata(L, 2, "vec"));
+    vector* worldup = *(vector**)(luaL_checkudata(L, 3, "vec"));
     matrix* res = new matrix(lookat_mat(*campos, *target, *worldup));
     void* mat_pp = lua_newuserdata(L, sizeof(void*));
     *(matrix**)mat_pp = res;
@@ -473,50 +481,43 @@ int new_lookat_mat(lua_State* L){
     return 1;
 }
 
-/*
-从lua的{{},{}}结构中创建矩阵似乎没什么意义,有new_serial_matrix就够了
-int new_table_matrix(lua_State* L){
-    return 1;
-};
-*/
 
-const std::unordered_map<const std::string, int(*)(lua_State* L), std::hash<std::string>> new_mat_jump_table{
-{"id", new_id_mat},
-{"col", new_col_mat},
-{"row", new_row_mat},
-{"ortho", new_ortho_mat},
-{"persp", new_perspective_mat},
-{"move", new_move_mat},
-{"rotate", new_rotate_mat},
-{"lookat", new_lookat_mat}
-//{"table", new_table_matrix}
-};
-
-int new_mat(lua_State* L){
-    const char* type = luaL_checkstring(L, 1);
-    if(!new_mat_jump_table.count(type)){
-        luaL_error(L, "unknown new matrix type %s", *type);
+int scale_mat_lua(lua_State* L){
+    size_t par_num = lua_gettop(L);
+    matrix* res;
+    if(par_num==1){
+        double scale_size = luaL_checknumber(L, 1);
+        res = new matrix(scale_mat(scale_size, scale_size, scale_size));
+    }else{
+        double scale_x = luaL_checknumber(L, 1);
+        double scale_y = luaL_checknumber(L, 2);
+        double scale_z = luaL_checknumber(L, 3);
+        res = new matrix(scale_mat(scale_x, scale_y, scale_z));
     }
-    return new_mat_jump_table.at(type)(L);
-};
+    void* mat_pp = lua_newuserdata(L, sizeof(void*));
+    *(matrix**)mat_pp = res;
+    create_mat_table(L);
+    return 1;
+}
 
-int delete_mat(lua_State* L){
+
+int delete_mat_lua(lua_State* L){
     delete *(matrix**)(luaL_checkudata(L, 1, "mat"));
     return 0;
 };
 
-int mat_to_string(lua_State* L){
+int mat_to_string_lua(lua_State* L){
     matrix* mat = *(matrix**)(luaL_checkudata(L, 1, "mat"));
     lua_pushstring(L, mat->tostr().c_str());
     return 1;
 };
 
-int get_mat_col(lua_State* L){
+int get_mat_col_lua(lua_State* L){
     matrix* mat = *(matrix**)(luaL_checkudata(L, 1, "mat"));
     lua_pushinteger(L, mat->col);
     return 1;
 };
-int get_mat_row(lua_State* L){
+int get_mat_row_lua(lua_State* L){
     matrix* mat = *(matrix**)(luaL_checkudata(L, 1, "mat"));
     lua_pushinteger(L, mat->row);
     return 1;
@@ -616,7 +617,7 @@ int index_mat_lua(lua_State* L){
     lua_gettable(L, 2) ; size_t col = luaL_checkinteger(L, -1); lua_pop(L,1);
     lua_pushinteger(L, 2);
     lua_gettable(L, 2) ; size_t row = luaL_checkinteger(L, -1); lua_pop(L,1);
-    if(col>mat->col||row>mat->row){
+    if(col>mat->col||row>mat->row||col<1||row<1){
         luaL_error(L, "access matrix index (%zu, %zu), but matrix size is (%zu, %zu)", col, row, mat->col, mat->row);
     }
     lua_pushnumber(L, mat->content[(col-1)*mat->row+(row-1)]);
@@ -630,7 +631,7 @@ int modify_mat_lua(lua_State* L){
     lua_gettable(L, 2) ; size_t col = luaL_checkinteger(L, -1); lua_pop(L,1);
     lua_pushinteger(L, 2);
     lua_gettable(L, 2) ; size_t row = luaL_checkinteger(L, -1); lua_pop(L,1);
-    if(col>mat->col||row>mat->row){
+    if(col>mat->col||row>mat->row||col<1||row<1){
         luaL_error(L, "modify matrix index (%zu, %zu), but matrix size is (%zu, %zu)", col, row, mat->col, mat->row);
     }
     mat->content[(col-1)*mat->row+(row-1)]=luaL_checknumber(L, 3);
