@@ -1,7 +1,6 @@
 #include <tiny_shader.hpp>
-#include <tiny_linear.hpp>
-#include <unordered_map>
 
+/*
 shader* shader_from_file(const char* vertex_shader_path, const char* fragment_shader_path){
         file_buffer vertex_shader_code = read_from_PHYSFS(vertex_shader_path);
         file_buffer fragment_shader_code = read_from_PHYSFS(fragment_shader_path);
@@ -10,44 +9,62 @@ shader* shader_from_file(const char* vertex_shader_path, const char* fragment_sh
         delete fragment_shader_code.content;
         return new_shader;
 };
+*/
 
-//vertex_shader_code和fragment_shader_code由调用者自行管理
-shader::shader(const char* vertex_shader_code, const char* fragment_shader_code){
-        unsigned int vertex, fragment;
-        vertex = glCreateShader(GL_VERTEX_SHADER);
-        glShaderSource(vertex, 1, &vertex_shader_code, NULL);
-        glCompileShader(vertex);
-        checkCompileErrors(vertex, "VERTEX");
-        fragment = glCreateShader(GL_FRAGMENT_SHADER);
-        glShaderSource(fragment, 1, &fragment_shader_code, NULL);
-        glCompileShader(fragment);
-        checkCompileErrors(fragment, "FRAGMENT");
-        ID = glCreateProgram();
-        glAttachShader(ID, vertex);
-        glAttachShader(ID, fragment);
-        glLinkProgram(ID);
-        checkCompileErrors(ID, "PROGRAM");
-        glDeleteShader(vertex);
-        glDeleteShader(fragment);
-}
+const std::unordered_map<GLenum,const char*> shadertype2str_table{
+    {GL_VERTEX_SHADER, "vertex"},
+    {GL_TESS_CONTROL_SHADER, "tess control"},
+    {GL_TESS_EVALUATION_SHADER, "tess eval"},
+    {GL_GEOMETRY_SHADER, "geometry"},
+    {GL_FRAGMENT_SHADER, "fragment"},
+    {GL_COMPUTE_SHADER, "compute"}
+};
 
-void shader::checkCompileErrors(unsigned int shader, const char* type)
-{
+const std::unordered_map<const std::string, GLenum, std::hash<std::string>> str2shadertype_table{
+    {"vertex", GL_VERTEX_SHADER},
+    {"tess_c", GL_TESS_CONTROL_SHADER},
+    {"tess_e", GL_TESS_EVALUATION_SHADER},
+    {"geom", GL_GEOMETRY_SHADER},
+    {"frag", GL_FRAGMENT_SHADER},
+    {"comp", GL_COMPUTE_SHADER}
+};
+
+GLuint compile_shader_code(const char* shader_code, GLenum shaderType){
+    GLuint shaderID;
+    GL_CHECK(shaderID = glCreateShader(shaderType));
+    GL_CHECK(glShaderSource(shaderID, 1, &shader_code, NULL));
+    GL_CHECK(glCompileShader(shaderID));
     int success;
     char infoLog[1024];
-    if (std::string(type) != "PROGRAM"){
-        glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
-        if (!success)
-        {
-            glGetShaderInfoLog(shader, 1024, NULL, infoLog);
-            fatal("ERROR::SHADER_COMPILATION_ERROR of type:%s\n%s\n", type, infoLog)
-        }
-    }else{
-        glGetProgramiv(shader, GL_LINK_STATUS, &success);
-        if (!success){
-            glGetProgramInfoLog(shader, 1024, NULL, infoLog);
-            fatal("ERROR::PROGRAM_LINKING_ERROR of type:%s\n%s\n", type, infoLog)
-        }
+    GL_CHECK(glGetShaderiv(shaderID, GL_COMPILE_STATUS, &success));
+    if (!success)
+    {
+        glGetShaderInfoLog(shaderID, 1024, NULL, infoLog);
+        fatal("opengl %s shader error:\n%s\n", shadertype2str_table.at(shaderType), infoLog)
+    }
+    return shaderID;
+}
+
+shader::shader(const std::vector<std::pair<const char*, GLenum>> & codes){
+    std::vector<GLuint> shaders;
+    for(auto code:codes){
+        shaders.push_back(compile_shader_code(code.first, code.second));
+    }
+    ID = glCreateProgram();
+    for(GLuint shader:shaders){
+        GL_CHECK(glAttachShader(ID, shader));
+    }
+    GL_CHECK(glLinkProgram(ID));
+    int success;
+    char infoLog[1024];
+    GL_CHECK(glGetProgramiv(ID, GL_LINK_STATUS, &success));
+    if (!success)
+    {
+        glGetProgramInfoLog(ID, 1024, NULL, infoLog);
+        fatal("opengl program error:\n%s\n", infoLog)
+    }
+    for(GLuint shader:shaders){
+        GL_CHECK(glDeleteShader(shader));
     }
 }
 
@@ -60,6 +77,7 @@ static const std::unordered_map<int, void(**)(GLint, GLsizei, const GLfloat*)>se
 //使用col*16+row计算每个矩阵对应的函数的key值,从而把不同维度的函数映射到不同的函数
 //这些函数指针的值会在运行时改变,因此需要存储指针的地址,不能直接存储指针(作为全局变量时未初始化)的值
 static const std::unordered_map<int, void(**)(GLint, GLsizei, GLboolean, const GLfloat*)>setmat_func_table{
+    //这些函数的第一个数表示列,第二个表示行
     {0x22, &glUniformMatrix2fv},
     {0x33, &glUniformMatrix3fv},
     {0x44, &glUniformMatrix4fv},
@@ -101,12 +119,12 @@ void create_shader_table(lua_State* L){
     if(luaL_newmetatable(L, "shader")){
         static const luaL_Reg functions[] =
         {
-            {"__gc", delete_shader},
-            {"use", use_shader},
-            {"set_int", set_shader_int},
-            {"set_float", set_shader_float},
-            {"set_mat", set_shader_mat},
-            {"set_vec", set_shader_vec},
+            {"__gc", delete_shader_lua},
+            {"use", use_shader_lua},
+            {"set_int", set_shader_int_lua},
+            {"set_float", set_shader_float_lua},
+            {"set_mat", set_shader_mat_lua},
+            {"set_vec", set_shader_vec_lua},
             {nullptr, nullptr}
         };
         //这个函数把上面的函数填入表
@@ -121,29 +139,49 @@ void create_shader_table(lua_State* L){
     return;
 }
 
-int new_shader(lua_State* L)
+int new_shader_lua(lua_State* L)
 {
-    const char* vertex_shader_code = luaL_checkstring(L, 1);
-    const char* fragment_shader_code = luaL_checkstring(L, 2);
+    luaL_checktype(L, 1, LUA_TTABLE);
+    std::vector<std::pair<const char*, GLenum>> shader_codes;
+    for(int i=1; i<=lua_objlen(L,1); i++){
+        lua_pushinteger(L, i);
+        lua_gettable(L, 1);
+        //获取着色器类型
+        lua_pushinteger(L, 1);
+        lua_gettable(L, -2);
+        const char* shadertype = luaL_checkstring(L, -1);
+        if(!str2shadertype_table.count(shadertype)){
+            luaL_error(L, "cannot find shader of type %s", shadertype);
+        }
+        lua_pop(L, 1);
+        //获取着色器字符串
+        lua_pushinteger(L, 2);
+        lua_gettable(L, -2);
+        const char* shadercode = luaL_checkstring(L, -1);
+        lua_pop(L, 1);
+        lua_pop(L, 1);
+        shader_codes.push_back({shadercode, str2shadertype_table.at(shadertype)});
+    }
+    shader* res =new shader(shader_codes);
     //创建userdata并把原表填充到栈顶
     void* shader_pp = lua_newuserdata(L, sizeof(void*));
-    *(shader**)shader_pp = new shader(vertex_shader_code, fragment_shader_code);
+    *(shader**)shader_pp = res;
     create_shader_table(L);
     return 1;
 }
 
-int delete_shader(lua_State* L){
+int delete_shader_lua(lua_State* L){
     delete *(shader**)(luaL_checkudata(L, 1, "shader"));
     return 0;
 }
 
-int use_shader(lua_State* L){
+int use_shader_lua(lua_State* L){
     shader* current_shader = *(shader**)(luaL_checkudata(L, 1, "shader"));
     current_shader->use();
     return 0;
 }
 
-int set_shader_int(lua_State* L){
+int set_shader_int_lua(lua_State* L){
     shader* current_shader = *(shader**)(luaL_checkudata(L, 1, "shader"));
     const char* name = luaL_checkstring(L, 2);
     GLint value = luaL_checkinteger(L, 3);
@@ -151,7 +189,7 @@ int set_shader_int(lua_State* L){
     return 0;
 }
 
-int set_shader_float(lua_State* L){
+int set_shader_float_lua(lua_State* L){
     shader* current_shader = *(shader**)(luaL_checkudata(L, 1, "shader"));
     const char* name = luaL_checkstring(L, 2);
     GLfloat value = luaL_checknumber(L, 3);
@@ -159,7 +197,7 @@ int set_shader_float(lua_State* L){
     return 0;
 }
 
-int set_shader_mat(lua_State* L){
+int set_shader_mat_lua(lua_State* L){
     int par_num = lua_gettop(L);
     shader* current_shader = *(shader**)(luaL_checkudata(L, 1, "shader"));
     const char* name = luaL_checkstring(L, 2);
@@ -174,7 +212,7 @@ int set_shader_mat(lua_State* L){
     return 0;
 }
 
-int set_shader_vec(lua_State* L){
+int set_shader_vec_lua(lua_State* L){
     int par_num = lua_gettop(L);
     shader* current_shader = *(shader**)(luaL_checkudata(L, 1, "shader"));
     const char* name = luaL_checkstring(L, 2);

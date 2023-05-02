@@ -26,7 +26,7 @@ function camera:update()
     self.right=linear.norm_vec(self.front^self.worldup)
     self.up=self.right^self.front
     self.look=
-    linear.persp_mat(self.zoom, 1.0, 0.1, 100)
+    linear.persp_mat(self.zoom, 1.0, 0.1, 1000)
     *linear.lookat_mat(
     self.pos,
     self.pos+self.front,

@@ -8,7 +8,7 @@ class shader{
 public:
     //传入按照physfs表示的路径
     GLuint ID;
-    shader(const char* vertex_shader_code, const char* fragment_shader_code);
+    shader(const std::vector<std::pair<const char*, GLenum>> & codes);
     ~shader(void){
         glDeleteProgram(ID);
     };
@@ -31,21 +31,18 @@ public:
     }
     void setMat(const char* name, const matrix &mat, GLboolean transpose) const;
     void setVec(const char* name, const vector &vec) const;
-
-    private:
-    static void checkCompileErrors(unsigned int shader, const char* type);
 };
 
-shader* shader_from_file(const char* vertex_shader_path, const char* fragment_shader_path);
+//shader* shader_from_file(const char* vertex_shader_path, const char* fragment_shader_path);
 
-int new_shader(lua_State* L);
-int delete_shader(lua_State* L);
+int new_shader_lua(lua_State* L);
+int delete_shader_lua(lua_State* L);
 
-int use_shader(lua_State* L);
-int set_shader_int(lua_State* L);
-int set_shader_float(lua_State* L);
-int set_shader_mat(lua_State* L);
-int set_shader_vec(lua_State* L);
+int use_shader_lua(lua_State* L);
+int set_shader_int_lua(lua_State* L);
+int set_shader_float_lua(lua_State* L);
+int set_shader_mat_lua(lua_State* L);
+int set_shader_vec_lua(lua_State* L);
 
 void luaopen_tiny_shaderlib(lua_State *L);
 

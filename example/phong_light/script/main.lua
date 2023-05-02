@@ -36,6 +36,8 @@ floor.pos = linear.new_vec(3, {0,-2,0})
 floor.rotate = {0.0,linear.new_vec(3, {1,0,0})}
 floor.scale = {40.0}
 
+actobj=box
+
 light.shader = require("script/light_shader")
 light.mesh = box.mesh
 light.color=linear.new_vec(3, {0.5,0.5,0.5})

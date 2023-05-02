@@ -1,7 +1,7 @@
 #include <tiny_shader.hpp>
 
 const luaL_Reg tiny_shader_func[] = {
-    {"new_shader", new_shader},
+    {"new_shader", new_shader_lua},
     {nullptr, nullptr}
 };
 

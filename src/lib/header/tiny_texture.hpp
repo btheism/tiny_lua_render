@@ -29,6 +29,12 @@ public:
         GL_CHECK(glBindTexture(GL_TEXTURE_CUBE_MAP, ID));
     }
 };
+/*
+//提供一个立方体缓冲,用于实现全方向阴影贴图,实际上也是对GL_TEXTURE_CUBE_MAP的封装,但由于与texture_cube用途不同(前者只读,后者只写,并且只有深度缓冲一个通道,因此单独作为一个类)
+class buffer_cube{
+
+}
+*/
 
 int new_texture_2d_lua(lua_State* L);
 int delete_texture_2d_lua(lua_State* L);

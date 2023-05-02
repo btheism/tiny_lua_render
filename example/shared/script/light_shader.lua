@@ -21,4 +21,9 @@ local light_fragment_shader_code = [[
     }
 ]]
 
-return shader.new_shader(light_vertex_shader_code, light_fragment_shader_code)
+print("successfully load shader for light")
+
+return shader.new_shader({
+{"vertex", light_vertex_shader_code},
+{"frag", light_fragment_shader_code}}
+)
