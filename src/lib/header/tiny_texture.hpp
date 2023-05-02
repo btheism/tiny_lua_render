@@ -26,7 +26,7 @@ public:
     }
     void active(int slot){
         GL_CHECK(glActiveTexture(GL_TEXTURE0+slot));
-        GL_CHECK(glBindTexture(GL_TEXTURE_3D, ID));
+        GL_CHECK(glBindTexture(GL_TEXTURE_CUBE_MAP, ID));
     }
 };
 

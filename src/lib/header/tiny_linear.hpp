@@ -13,6 +13,10 @@ public:
     matrix(size_t row, size_t col);
     //row_major=true,假定输入数据为行优先;row_major=false,假定输入数据为列优先
     matrix(size_t col, size_t row, const std::vector<float>& list, bool row_major);
+    //复制矩阵,可以选择是否转置
+    matrix(const matrix & mirror, bool trans);
+    //复制部分矩阵,可以选择是否在复制数据时转置
+    matrix(const matrix & mirror, size_t exp_col, size_t exp_row, bool trans);
     std::string tostr_col_major(void);
     std::string tostr(void);
     ~matrix(void){
@@ -58,6 +62,7 @@ int move_mat_lua(lua_State* L);
 int rotate_mat_lua(lua_State* L);
 int lookat_mat_lua(lua_State* L);
 int scale_mat_lua(lua_State* L);
+int normal_mat_lua(lua_State* L);
 
 int add_mat_lua(lua_State* L);
 int sub_mat_lua(lua_State* L);

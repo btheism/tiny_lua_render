@@ -1,4 +1,3 @@
---这个例子没有实现可不等比例缩放的法线矩阵,正确的实现见cube_texture
 light={}
 box={}
 box.shader = require("script/object_shader")
@@ -12,10 +11,17 @@ light.scale=0.2
 light.step=0.02
 light.speed=0.1
 
-tex_keqing = texture.new_texture_2d("image/genshin/keqing.jpg", "rgb", "rgba", "repeat", "repeat", "linear", "linear")
 
-tex_klee = texture.new_texture_2d("image/genshin/klee.jpg", "rgb", "rgba", "repeat", "repeat", "linear", "linear")
-box.tex=tex_keqing
+box.tex = texture.new_texture_cube(
+{
+front="image/genshin/traveler_male.jpg",
+back="image/genshin/traveler_female.jpg",
+up="image/genshin/klee.jpg",
+down="image/genshin/qiqi.jpg",
+left="image/genshin/jean.jpg",
+right="image/genshin/keqing.jpg",
+}
+,"rgb", "rgba", "linear", "linear")
 box.ambientstrength=0.1
 box.ambient_step=0.05
 box.diffstrength=0.5
@@ -26,12 +32,18 @@ box.spec_step=0.05
 light.pos = linear.new_vec(3, {3,3,-3})
 
 box.pos = linear.new_vec(3, {0,0,0})
-box.rotate = {math.rad(45),linear.new_vec(3, {1,0,0})}
+box.rotate = {0,linear.new_vec(3, {1,0,0})}
+box.scale = {0.8,0.5,1.3}
 
 function box:draw()
     self.shader:use()
     self.shader:set_mat("cameraM", camera.look)
-    self.shader:set_mat("modelM", linear.move_mat(self.pos)*linear.rotate_mat(unpack(self.rotate)))
+    local modelM =
+    linear.move_mat(self.pos)*
+    linear.rotate_mat(unpack(self.rotate))*
+    linear.scale_mat(unpack(box.scale))
+    self.shader:set_mat("modelM", modelM)
+    self.shader:set_mat("normalM", linear.normal_mat(modelM))
     self.shader:set_vec("LightColor", light.color)
     self.shader:set_vec("LightPos", light.pos)
     self.shader:set_vec("ViewPos", camera.pos)
@@ -71,15 +83,6 @@ function process_input()
     if(window.key_pressed("escape"))
     then
         window.set_close_bit()
-    end
-    if key_newly_pressed("c")
-    then
-        if(box.tex==tex_keqing)
-        then
-            box.tex=tex_klee
-        else
-            box.tex=tex_keqing
-        end
     end
     if(window.key_pressed("r")) and light.color[1]+light.step<=1.0
     then
@@ -159,7 +162,7 @@ end
 
 function update(dt)
     camera:update()
-    box.rotate[1]=box.rotate[1]+dt*10
+    --box.rotate[1]=box.rotate[1]+dt*10
     box:draw()
     light:draw()
 end

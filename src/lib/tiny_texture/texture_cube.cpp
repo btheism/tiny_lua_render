@@ -11,7 +11,8 @@ texture_cube::texture_cube(const char* image_path[], GLint image_mode, GLint tex
     GL_CHECK(glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, max_filter));
     //image_8bit会自动释放内存
     for(int img_serial=0; img_serial<6; img_serial++){
-        image_8bit image(image_path[img_serial], true);
+        //很奇怪,立方体贴图的纵坐标似乎不该反转
+        image_8bit image(image_path[img_serial], false);
         if(image.channel!=image_mode_channel_table.at(image_mode)){
             fatal("image has %d channels, but image mode %s expects %d channels\n",
                 image.channel,
@@ -53,10 +54,10 @@ int new_texture_cube_lua(lua_State* L)
     const char* faces_pos_list[6] = {"right", "left", "up", "down", "back", "front"};
     const char* faces_name[6];
     luaL_checktype(L, 1, LUA_TTABLE);
-    for(int i=0; i<5; i++){
+    for(int i=0; i<6; i++){
         lua_pushstring(L, faces_pos_list[i]);
         lua_gettable(L, 1);
-        faces_name[i] = luaL_checkstring(L, -1);
+        faces_name[i] = luaL_checkstring(L, -1);lua_pop(L, 1);
     }
 
     const char* image_mode = luaL_checkstring(L, 2);
@@ -97,7 +98,7 @@ int delete_texture_cube_lua(lua_State* L){
 }
 
 int active_texture_cube_lua(lua_State* L){
-    texture_cube* current_texture =  *(texture_cube**)(luaL_checkudata(L, 1, "texture_2d"));
+    texture_cube* current_texture =  *(texture_cube**)(luaL_checkudata(L, 1, "texture_cube"));
     int slot = luaL_checkinteger(L, 2);
     current_texture->active(slot);
     return 0;

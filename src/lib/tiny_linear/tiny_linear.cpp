@@ -15,6 +15,7 @@ const luaL_Reg tiny_linear_func[] = {
     {"rotate_mat", rotate_mat_lua},
     {"lookat_mat", lookat_mat_lua},
     {"scale_mat", scale_mat_lua},
+    {"normal_mat", normal_mat_lua},
 
     //关于向量的函数
     {"new_vec", new_vec},

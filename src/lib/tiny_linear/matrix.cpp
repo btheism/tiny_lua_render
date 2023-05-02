@@ -3,19 +3,63 @@
 //该方法返回一个全0矩阵
 matrix::matrix(size_t col, size_t row):col(col),row(row){
     int len=row*col;
-    if(row==0||col==0){
-        fatal("invaild shape\n");
-    }
     content = new float[col*row]();
 };
 
 //复制矩阵
 matrix::matrix(const matrix & mirror){
-    row = mirror.row;
     col = mirror.col;
+    row = mirror.row;
     content = new float[col*row];
     for(size_t i=0; i<col*row; i++){
         content[i]=mirror.content[i];
+    }
+}
+
+//复制矩阵,但可以选择是否转置
+matrix::matrix(const matrix & mirror, bool trans){
+    if(trans==false){
+        //必须用大括号,否则C++会把小括号识别为类型转换??
+        matrix{mirror};
+    }
+    else{
+        col = mirror.row;
+        row = mirror.col;
+        content = new float[col*row];
+        for(size_t c=0; c<col; c++){
+            for(size_t r=0; r<row; r++){
+            content[c*row+r]=mirror.content[r*mirror.row+c];
+            }
+        }
+    }
+}
+
+matrix::matrix(const matrix & mirror, size_t exp_col, size_t exp_row, bool trans){
+    if(trans==false){
+        if(exp_col>mirror.col||exp_row>mirror.row){
+            fatal("cannot copy a matrix of size (%zu, %zu) from orignial matrix of size(%zu, %zu)\n",exp_col, exp_row, mirror.col, mirror.row);
+        }
+        col = exp_col;
+        row = exp_row;
+        content = new float[col*row];
+        for(size_t c=0; c<col; c++){
+            for(size_t r=0; r<row; r++){
+            content[c*row+r]=mirror.content[c*mirror.row+r];
+            }
+        }
+    }
+    if(trans==true){
+        if(exp_col>mirror.row||exp_row>mirror.col){
+            fatal("cannot copy a traversed matrix of size (%zu, %zu) from orignial matrix of size(%zu, %zu)\n",exp_col, exp_row, mirror.col, mirror.row);
+        }
+        col = exp_col;
+        row = exp_row;
+        content = new float[col*row];
+        for(size_t c=0; c<col; c++){
+            for(size_t r=0; r<row; r++){
+            content[c*row+r]=mirror.content[r*mirror.row+c];
+            }
+        }
     }
 }
 
@@ -272,13 +316,7 @@ matrix inverse_mat(const matrix& mat){
 }
 
 matrix transpose_mat(const matrix& mat){
-    matrix res(mat.row, mat.col);
-    for(size_t res_c=0; res_c<res.col; res_c++){
-        for(size_t res_r=0; res_r<res.row; res_r++){
-            res.content[res_c*res.row+res_r]=mat.content[res_r*mat.row+res_c];
-        }
-    }
-    return res;
+    return matrix(mat, true);
 }
 
 matrix move_mat(const vector& pos){
@@ -346,6 +384,16 @@ matrix scale_mat(float x, float y, float z){
     res.content[10]=z;
     res.content[15]=1.0;
     return res;
+}
+
+//输入一个4-位置矩阵,输出对应的3-法线矩阵,无法保证法线长度不变,需要再归一化法线
+matrix normal_mat(const matrix & pos_mat){
+    if(pos_mat.col!=4||pos_mat.row!=4){
+        fatal("create normal matrix with position matrix of size (%zu, %zu)\n", pos_mat.col, pos_mat.row)
+    }
+    //转置后求逆
+    matrix LU_mat(pos_mat, 3 , 3, true);
+    return inverse_mat(LU_mat);
 }
 
 //该函数应配合new_mat使用,设置栈顶上的元素的元表为mesh
@@ -499,6 +547,16 @@ int scale_mat_lua(lua_State* L){
     create_mat_table(L);
     return 1;
 }
+
+int normal_mat_lua(lua_State* L){
+    matrix* mat = *(matrix**)(luaL_checkudata(L, 1, "mat"));
+    matrix* res = new matrix(normal_mat(*mat));
+    void* mat_pp = lua_newuserdata(L, sizeof(void*));
+    *(matrix**)mat_pp = res;
+    create_mat_table(L);
+    return 1;
+}
+
 
 
 int delete_mat_lua(lua_State* L){
