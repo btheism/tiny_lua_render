@@ -9,11 +9,11 @@ public:
     GLuint ID;
     texture_2d(const char* image_path, GLint image_mode, GLint texture_mode, GLint swrap, int twrap, GLint min_filter, GLint max_filter);
     ~texture_2d(void){
-        glDeleteTextures(1, &ID);
+        GL_CHECK(glDeleteTextures(1, &ID));
     }
     void active(int slot){
-        glActiveTexture(GL_TEXTURE0+slot);
-        glBindTexture(GL_TEXTURE_2D, ID);
+        GL_CHECK(glActiveTexture(GL_TEXTURE0+slot));
+        GL_CHECK(glBindTexture(GL_TEXTURE_2D, ID));
     }
 };
 
@@ -22,11 +22,11 @@ public:
     GLuint ID;
     texture_cube(const char* image_path[], GLint image_mode, GLint texture_mode, GLint min_filter, GLint max_filter);
     ~texture_cube(void){
-        glDeleteTextures(1, &ID);
+        GL_CHECK(glDeleteTextures(1, &ID));
     }
     void active(int slot){
-        glActiveTexture(GL_TEXTURE0+slot);
-        glBindTexture(GL_TEXTURE_3D, ID);
+        GL_CHECK(glActiveTexture(GL_TEXTURE0+slot));
+        GL_CHECK(glBindTexture(GL_TEXTURE_3D, ID));
     }
 };
 

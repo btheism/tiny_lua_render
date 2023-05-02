@@ -11,8 +11,9 @@ light.scale=0.2
 light.step=0.02
 light.speed=0.1
 
-tex_keqing = texture.new_texture_2d("image/keqing.jpg", "rgb", "rgba", "repeat", "repeat", "linear", "linear")
-tex_keli = texture.new_texture_2d("image/keli.jpg", "rgb", "rgba", "repeat", "repeat", "linear", "linear")
+tex_keqing = texture.new_texture_2d("image/genshin/keqing.jpg", "rgb", "rgba", "repeat", "repeat", "linear", "linear")
+
+tex_klee = texture.new_texture_2d("image/genshin/klee.jpg", "rgb", "rgba", "repeat", "repeat", "linear", "linear")
 box.tex=tex_keqing
 box.ambientstrength=0.1
 box.ambient_step=0.05
@@ -74,7 +75,7 @@ function process_input()
     then
         if(box.tex==tex_keqing)
         then
-            box.tex=tex_keli
+            box.tex=tex_klee
         else
             box.tex=tex_keqing
         end
@@ -174,4 +175,3 @@ do
     last_time = current_time
 
 end
-

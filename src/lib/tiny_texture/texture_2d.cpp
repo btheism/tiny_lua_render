@@ -1,12 +1,12 @@
 #include<tiny_texture.hpp>
 
 texture_2d::texture_2d(const char* image_path, GLint image_mode, GLint texture_mode, GLint swrap, int twrap, GLint min_filter, GLint max_filter){
-    glGenTextures(1, &ID);
-    glBindTexture(GL_TEXTURE_2D, ID);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, swrap);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, twrap);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, min_filter);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, max_filter);
+    GL_CHECK(glGenTextures(1, &ID));
+    GL_CHECK(glBindTexture(GL_TEXTURE_2D, ID));
+    GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, swrap));
+    GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, twrap));
+    GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, min_filter));
+    GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, max_filter));
     //image_8bit会自动释放内存
     image_8bit image(image_path, true);
 
@@ -17,8 +17,8 @@ texture_2d::texture_2d(const char* image_path, GLint image_mode, GLint texture_m
               image_mode_channel_table.at(image_mode)
         );
     };
-    glTexImage2D(GL_TEXTURE_2D, 0, texture_mode, image.width, image.height, 0, image_mode, GL_UNSIGNED_BYTE, image.content);
-    glGenerateMipmap(GL_TEXTURE_2D);
+    GL_CHECK(glTexImage2D(GL_TEXTURE_2D, 0, texture_mode, image.width, image.height, 0, image_mode, GL_UNSIGNED_BYTE, image.content));
+    GL_CHECK(glGenerateMipmap(GL_TEXTURE_2D));
 }
 
 //该函数应配合new_texture_2d使用,设置栈顶上的元素的元表为shader

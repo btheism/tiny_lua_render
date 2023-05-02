@@ -31,6 +31,12 @@ throw std::runtime_error("fatal error, see log");  \
 #define log(args...) fprintf(get_log_file(), args);
 #endif
 
+#define GL_CHECK(stmt) \
+{\
+stmt; \
+CheckOpenGLError(__FILE__, __LINE__); \
+}
+
 void set_log_file(FILE* file);
 FILE* get_log_file(void);
 void dump_lua_stack(lua_State *L);
@@ -42,7 +48,7 @@ typedef struct {
 file_buffer read_from_PHYSFS(const char* file_name);
 //与上个函数相比在末尾补充了'\0', 从而正确结束字符串,返回的长度比字符串文件大1
 file_buffer read_str_from_PHYSFS(const char* file_name);
-
+void CheckOpenGLError(const char* fname, int line);
 
 //变量必须被声明为extern,否则会被初始化为空变量!!!
 extern const std::unordered_map <int, const std::string>key2str_table;

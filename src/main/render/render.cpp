@@ -10,17 +10,25 @@ namespace fs = std::filesystem;
 #include <tiny_mesh.hpp>
 #include <tiny_linear.hpp>
 
-void load_resource(char *argv[]){
+void load_resource(int argc, char *argv[]){
     static const std::vector<std::string> resources = {"script", "image", "sound", "model", "shader"};
     PHYSFS_init(argv[0]);
+    //文件夹的优先级大于文件,第一个目录的优先级大于第二个目录,PHYSFS_mount的最后一个参数传入非0,表示把搜索优先级设到当前列表的末尾
     for(const std::string & resource: resources){
-        if(!PHYSFS_mount((fs::path(argv[1])/fs::path(resource+std::string(".zip"))).c_str(), resource.c_str(), 0)){
-            log("do not find resource pack of %s.\n", resource.c_str());
+        if(!PHYSFS_mount((fs::path(argv[1])/fs::path(resource)).c_str(), resource.c_str(), 1)){
+            log("do not find resource folder of %s in private path.\n", resource.c_str());
         }
-    }
-    for(const std::string & resource: resources){
-        if(!PHYSFS_mount((fs::path(argv[1])/fs::path(resource)).c_str(), resource.c_str(), 0)){
-            log("do not find resource folder of %s\n", resource.c_str());
+        if(!PHYSFS_mount((fs::path(argv[1])/fs::path(resource+std::string(".zip"))).c_str(), resource.c_str(), 1)){
+            log("do not find resource pack of %s in private path.\n", resource.c_str());
+        }
+        //允许程序定义第二个目录(一般用于不同程序共享资源)
+        if(argc>2){
+            if(!PHYSFS_mount((fs::path(argv[2])/fs::path(resource)).c_str(), resource.c_str(), 1)){
+                log("do not find resource folder of %s in common path.\n", resource.c_str());
+            }
+            if(!PHYSFS_mount((fs::path(argv[2])/fs::path(resource+std::string(".zip"))).c_str(), resource.c_str(), 1)){
+                log("do not find resource pack of %s in common path.\n", resource.c_str());
+            }
         }
     }
 
@@ -63,7 +71,7 @@ int main(int argc, char * argv[])
         fatal("please specify the location of resource file\n");
         exit(-1);
     }
-    load_resource(argv);
+    load_resource(argc, argv);
     file_buffer conf_buffer = read_from_PHYSFS("script/conf.lua");
     lua_State* conf_L = luaL_newstate();
     int conf_exec_state = luaL_loadbuffer(conf_L, conf_buffer.content, conf_buffer.len, "script/conf.lua") || lua_pcall(conf_L, 0, LUA_MULTRET, 0);

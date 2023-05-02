@@ -20,14 +20,14 @@ public:
         if(uni_loc==-1){
             fatal("cannot find uniform %s in shader\n", name)
         }
-        glUniform1i(uni_loc, value);
+        GL_CHECK(glUniform1i(uni_loc, value));
     }
     void setFloat(const char* name, GLfloat value) const{
         int uni_loc = glGetUniformLocation(ID, name);
         if(uni_loc==-1){
             fatal("cannot find uniform %s in shader\n", name)
         }
-        glUniform1f(uni_loc, value);
+        GL_CHECK(glUniform1f(uni_loc, value));
     }
     void setMat(const char* name, const matrix &mat, GLboolean transpose) const;
     void setVec(const char* name, const vector &vec) const;

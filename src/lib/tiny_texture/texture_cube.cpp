@@ -1,14 +1,14 @@
 #include<tiny_texture.hpp>
 
 texture_cube::texture_cube(const char* image_path[], GLint image_mode, GLint texture_mode, GLint min_filter, GLint max_filter){
-    glGenTextures(1, &ID);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, ID);
+    GL_CHECK(glGenTextures(1, &ID));
+    GL_CHECK(glBindTexture(GL_TEXTURE_CUBE_MAP, ID));
     //立方体贴图的wrap模式仅影响接缝处的点,没有自定义的价值
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, min_filter);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, max_filter);
+    GL_CHECK(glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
+    GL_CHECK(glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
+    GL_CHECK(glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE));
+    GL_CHECK(glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, min_filter));
+    GL_CHECK(glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, max_filter));
     //image_8bit会自动释放内存
     for(int img_serial=0; img_serial<6; img_serial++){
         image_8bit image(image_path[img_serial], true);
@@ -20,10 +20,10 @@ texture_cube::texture_cube(const char* image_path[], GLint image_mode, GLint tex
             );
         };
         //顺序:右,左,上,下,后,前
-        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + img_serial, 0, texture_mode, image.width, image.height, 0, image_mode, GL_UNSIGNED_BYTE, image.content);
+        GL_CHECK(glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + img_serial, 0, texture_mode, image.width, image.height, 0, image_mode, GL_UNSIGNED_BYTE, image.content));
 
     }
-    glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
+    GL_CHECK(glGenerateMipmap(GL_TEXTURE_CUBE_MAP));
 }
 
 //该函数应配合new_texture_cube_lua使用,设置栈顶上的元素的元表为texture_cube
