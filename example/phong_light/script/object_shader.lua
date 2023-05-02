@@ -7,6 +7,7 @@ local object_vertex_shader_code = [[
     layout (location = 1) in vec2 aTexPos;
     uniform mat4 cameraM;
     uniform mat4 modelM;
+    uniform mat3 normalM;
     out vec2 TexPos;
     out vec3 Normal;
     out vec3 FragPos;//顶点的世界坐标
@@ -14,7 +15,7 @@ local object_vertex_shader_code = [[
     {
        gl_Position = cameraM*modelM*vec4(aPos, 1.0);
        TexPos = aTexPos;
-       Normal = (modelM*vec4(aNormal,1.0)).xyz;
+       Normal = normalize(normalM*aNormal);
        FragPos = vec3(modelM * vec4(aPos, 1.0));
     }
 ]]
