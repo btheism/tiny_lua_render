@@ -1,18 +1,10 @@
 box={}
-box.shader = require("script/loc_shader")
+box.shader = require("script/object_shader")
 box.mesh = require("script/box_mesh")
 box.camera = require("script/camera")
 tex_keqing = texture.new_texture_2d("image/keqing.jpg", "rgb", "rgba", "repeat", "repeat", "linear", "linear")
 tex_keli = texture.new_texture_2d("image/keli.jpg", "rgb", "rgba", "repeat", "repeat", "linear", "linear")
 box.tex=tex_keqing
-
---[[
-da=linear.new_vec(3,{1,3,4})
-db=linear.new_mat("row", 3, 2, {1,5,6,2,8,9})
-print(da)
-print(db)
-print(db*da)
-]]--
 
 box.pos = linear.new_vec(3, {0,0,-3})
 box.rotate = {math.rad(45),linear.new_vec(3, {1,2,3})}

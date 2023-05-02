@@ -3,8 +3,8 @@
 local object_vertex_shader_code = [[
     #version 330 core
     layout (location = 0) in vec3 aPos;
-    layout (location = 1) in vec3 aNormal;
-    layout (location = 2) in vec2 aTexPos;
+    layout (location = 2) in vec3 aNormal;
+    layout (location = 1) in vec2 aTexPos;
     uniform mat4 cameraM;
     uniform mat4 modelM;
     out vec2 TexPos;

@@ -1,4 +1,5 @@
 --这个着色器用于渲染光源,因此直接显示光的颜色,实际上并未进行计算
+--光线着色器比较通用,故放到shared文件夹
 
 local light_vertex_shader_code = [[
     #version 330 core
