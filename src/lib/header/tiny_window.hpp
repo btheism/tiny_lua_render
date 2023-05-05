@@ -13,7 +13,11 @@ int clear(lua_State *L);
 int fresh(lua_State *L);
 int should_close(lua_State *L);
 int set_close_bit(lua_State *L);
-
+int enable_depth(lua_State *L);
+int disable_depth(lua_State *L);
+int enable_stencial(lua_State *L);
+int disable_stencial(lua_State *L);
+//int check_framebuffer_status(lua_State *L);
 void luaopen_tiny_windowlib(lua_State *L);
 
 #endif

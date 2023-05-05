@@ -1,63 +1,50 @@
 #include<tiny_mesh.hpp>
 
-mesh::mesh(GLenum type, GLsizei count, const std::vector<float>& vbo_data, const std::vector<VAO_par>& vas):type(type), count(count), VAO(0), VBO(0), EBO(0){
-    glGenVertexArrays(1, &VAO);
-    glGenVertexArrays(1, &VBO);
+mesh::mesh(GLenum type, GLsizei count, const std::vector<float>& vbo_data, const std::vector<VAO_par>& vas):type(type), count(count), have_ebo(false){
+    GLuint VBO;
+    GL_CHECK(glCreateVertexArrays(1, &VAO));
+    GL_CHECK(glCreateBuffers(1, &VBO));//不能使用glGenBuffers!!
+    GL_CHECK(glNamedBufferData(VBO, vbo_data.size()*sizeof(float), &(vbo_data[0]), GL_STATIC_DRAW));
 
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, vbo_data.size()*sizeof(float), &(vbo_data[0]), GL_STATIC_DRAW);
-    //顶点属性指针指向VAO被解绑前最后一个绑定的VBO的,因此必须在解绑VAO前绑定VBO
-    glBindVertexArray(VAO);
     for(const VAO_par & va:vas){
         //log("get vao (%d, %d, %d, %zu)\n", va.index, va.size, va.stride, va.offset)
-        glVertexAttribPointer(va.index, va.size, GL_FLOAT, GL_FALSE, va.stride*sizeof(float), (void*)(va.offset*sizeof(float)));
-        glEnableVertexAttribArray(va.index);
+        //启用顶点
+        GL_CHECK(glEnableVertexArrayAttrib(VAO, va.index));
+        //生成一个视图
+        GL_CHECK(glVertexArrayVertexBuffer(VAO, va.index, VBO, va.offset*sizeof(float), va.stride*sizeof(float)));
+        //绑定视图到顶点
+        GL_CHECK(glVertexArrayAttribBinding(VAO, va.index, va.index));
+        //设置顶点属性,不明白这里为什么又要定义偏移量
+        GL_CHECK(glVertexArrayAttribFormat(VAO, va.index, va.size, GL_FLOAT, GL_FALSE, 0));
     }
-    glBindVertexArray(0);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    //GL_CHECK(glBindVertexArray(0));
+    GL_CHECK(glDeleteBuffers(1, &VBO));
 };
 
-mesh::mesh(GLenum type, GLsizei count, const std::vector<float> &vbo_data, const std::vector<VAO_par>& vas, const std::vector<unsigned int>& ebo_data):type(type), count(count), VAO(0), VBO(0), EBO(0){
-    glGenVertexArrays(1, &VAO);
-    glGenVertexArrays(1, &EBO);
-    glGenVertexArrays(1, &VBO);
-
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, vbo_data.size()*sizeof(float), &(vbo_data[0]), GL_STATIC_DRAW);
-
-    glBindVertexArray(VAO);
-    //VAO会保存EBO,但不保存VBO,因此EBO必须在VAO之后绑定
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, ebo_data.size()*sizeof(unsigned int), &(ebo_data[0]), GL_STATIC_DRAW);
-
-    for(const VAO_par & va:vas){
-        //log("get vao (%d, %d, %d, %zu)\n", va.index, va.size, va.stride, va.offset)
-        glVertexAttribPointer(va.index, va.size, GL_FLOAT, GL_FALSE, va.stride*sizeof(float),(void*)(va.offset*sizeof(float)));
-        glEnableVertexAttribArray(va.index);
-    }
-
-    glBindVertexArray(0);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
+mesh::mesh(GLenum type, GLsizei count, const std::vector<float> &vbo_data, const std::vector<VAO_par>& vas, const std::vector<unsigned int>& ebo_data):mesh(type, count, vbo_data, vas){
+    have_ebo=true;
+    GLuint EBO;
+    GL_CHECK(glCreateBuffers(1, &EBO));
+    GL_CHECK(glNamedBufferData(EBO, ebo_data.size()*sizeof(unsigned int), &(ebo_data[0]), GL_STATIC_DRAW));
+    glVertexArrayElementBuffer(VAO, EBO);
+    //opengl的一般规则:删除一个子对象时先解绑其父对象,一般而言,opengl删除子对象时如果其与当前父对象绑定,则自动解绑,并删除子对象;如果其与其他父对象绑定,则只减小引用计数,framebuffer和VAO都是如此。但着色器是个例外,它不会触发对当前激活的program的自动detach;此外,删除其他对象时会自动把绑定置0,但program不会(似乎都是由于没有默认的program)
+    GL_CHECK(glDeleteBuffers(1, &EBO));
 };
 
 mesh::~mesh(void){
     glDeleteVertexArrays(1, &VAO);
-    glDeleteBuffers(1, &VBO);
-    if(EBO!=0){
-        glDeleteBuffers(1, &EBO);
-    }
     return;
 };
 
 void mesh::draw(void){
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBindVertexArray(VAO);
-    if(EBO!=0){
+    if(have_ebo){
         //这里规定EBO中的数据类型
         glDrawElements(type, count, GL_UNSIGNED_INT, 0);
     }else{
         glDrawArrays(type, 0, count);
     }
+    glBindVertexArray(0);
 };
 
 //该函数应配合new_mesh使用,设置栈顶上的元素的元表为mesh

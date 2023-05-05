@@ -118,3 +118,31 @@ int set_close_bit(lua_State *L){
     glfwSetWindowShouldClose(window, true);
     return 0;
 }
+
+int enable_depth(lua_State *L){
+    GL_CHECK(glEnable(GL_DEPTH_TEST));
+    return 0;
+}
+
+int disable_depth(lua_State *L){
+    GL_CHECK(glDisable(GL_DEPTH_TEST));
+    return 0;
+}
+
+int enable_stencial(lua_State *L){
+    GL_CHECK(glEnable(GL_STENCIL_TEST));
+    return 0;
+}
+int disable_stencial(lua_State *L){
+    GL_CHECK(glDisable(GL_STENCIL_TEST));
+    return 0;
+}
+/*
+int check_framebuffer_status(lua_State *L){
+    GLuint fb_code;
+    GL_CHECK(fb_code = glCheckFramebufferStatus(GL_FRAMEBUFFER))
+    if(fb_code != GL_FRAMEBUFFER_COMPLETE)
+    log("ERROR::FRAMEBUFFER:: Framebuffer is not complete!")
+    return 0;
+};
+*/

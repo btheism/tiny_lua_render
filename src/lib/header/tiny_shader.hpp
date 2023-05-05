@@ -9,25 +9,31 @@ public:
     //传入按照physfs表示的路径
     GLuint ID;
     shader(const std::vector<std::pair<const char*, GLenum>> & codes);
+    shader(const shader & mirror) = delete;
+    shader(shader && mirror){
+        ID = mirror.ID;
+        mirror.ID=0;
+    }
     ~shader(void){
-        glDeleteProgram(ID);
+        GL_CHECK(glDeleteProgram(ID));
     };
     void use(){
-        glUseProgram(ID);
+        GL_CHECK(glUseProgram(ID));
     }
     void setInt(const char* name, GLint value) const{
         int uni_loc = glGetUniformLocation(ID, name);
         if(uni_loc==-1){
             fatal("cannot find uniform %s in shader\n", name)
         }
-        GL_CHECK(glUniform1i(uni_loc, value));
+        //使用了DSA函数以避免binding
+        GL_CHECK(glProgramUniform1i(ID, uni_loc, value));
     }
     void setFloat(const char* name, GLfloat value) const{
         int uni_loc = glGetUniformLocation(ID, name);
         if(uni_loc==-1){
             fatal("cannot find uniform %s in shader\n", name)
         }
-        GL_CHECK(glUniform1f(uni_loc, value));
+        GL_CHECK(glProgramUniform1f(ID, uni_loc, value));
     }
     void setMat(const char* name, const matrix &mat, GLboolean transpose) const;
     void setVec(const char* name, const vector &vec) const;

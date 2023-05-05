@@ -44,7 +44,10 @@ local object_fragment_shader_code = [[
     }
 ]]
 
-local object_shader=shader.new_shader(object_vertex_shader_code, object_fragment_shader_code)
+local object_shader=shader.new_shader({
+{"vertex", object_vertex_shader_code},
+{"frag", object_fragment_shader_code}
+})
 object_shader:use()
 object_shader:set_int("Tex"..(0), 0)
 return object_shader

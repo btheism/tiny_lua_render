@@ -5,6 +5,7 @@ bin/lib/libtiny_texture.so
 bin/lib/libtiny_mesh.so
 bin/lib/libtiny_image.so
 bin/lib/libtiny_linear.so
+bin/lib/libtiny_framebuffer.so
 bin/lib/libtiny_common.so
 bin/test/glfw_callback
 bin/test/glfw_getkey

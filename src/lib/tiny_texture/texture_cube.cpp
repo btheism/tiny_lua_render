@@ -1,16 +1,18 @@
 #include<tiny_texture.hpp>
 
 texture_cube::texture_cube(const char* image_path[], GLint image_mode, GLint texture_mode, GLint min_filter, GLint max_filter){
-    GL_CHECK(glGenTextures(1, &ID));
-    GL_CHECK(glBindTexture(GL_TEXTURE_CUBE_MAP, ID));
+    GL_CHECK(glCreateTextures(GL_TEXTURE_CUBE_MAP, 1, &ID));
     //立方体贴图的wrap模式仅影响接缝处的点,没有自定义的价值
-    GL_CHECK(glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
-    GL_CHECK(glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
-    GL_CHECK(glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE));
-    GL_CHECK(glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, min_filter));
-    GL_CHECK(glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, max_filter));
+    GL_CHECK(glTextureParameteri(ID, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
+    GL_CHECK(glTextureParameteri(ID, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
+    GL_CHECK(glTextureParameteri(ID, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE));
+    GL_CHECK(glTextureParameteri(ID, GL_TEXTURE_MIN_FILTER, min_filter));
+    GL_CHECK(glTextureParameteri(ID, GL_TEXTURE_MAG_FILTER, max_filter));
+    int img_width, img_height;
+
     //image_8bit会自动释放内存
     for(int img_serial=0; img_serial<6; img_serial++){
+
         //很奇怪,立方体贴图的纵坐标似乎不该反转
         image_8bit image(image_path[img_serial], false);
         if(image.channel!=image_mode_channel_table.at(image_mode)){
@@ -20,11 +22,22 @@ texture_cube::texture_cube(const char* image_path[], GLint image_mode, GLint tex
                 image_mode_channel_table.at(image_mode)
             );
         };
+        if(img_serial==0){
+            //根据图片的大小初始化纹理内存
+            img_width=image.width;
+            img_height=image.height;
+            GL_CHECK(glTextureStorage2D(ID, 1 + std::floor(std::log2(std::max(img_width, img_height))), texture_mode, image.width, image.height))
+        }
+        if(image.height!=img_height||image.width!=img_width){
+            fatal("create cube map with inconsistent size images")
+        }
+
         //顺序:右,左,上,下,后,前
-        GL_CHECK(glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + img_serial, 0, texture_mode, image.width, image.height, 0, image_mode, GL_UNSIGNED_BYTE, image.content));
+        //img_serial指定开始的偏移,1表示只上传一面图片
+        GL_CHECK(glTextureSubImage3D(ID, 0, 0, 0, img_serial, image.width, image.height, 1, image_mode, GL_UNSIGNED_BYTE, image.content));
 
     }
-    GL_CHECK(glGenerateMipmap(GL_TEXTURE_CUBE_MAP));
+    GL_CHECK(glGenerateTextureMipmap(ID));
 }
 
 //该函数应配合new_texture_cube_lua使用,设置栈顶上的元素的元表为texture_cube
@@ -66,7 +79,7 @@ int new_texture_cube_lua(lua_State* L)
     }
 
     const char* texture_mode = luaL_checkstring(L, 3);
-    if(!str2image_mode_table.count(texture_mode)){
+    if(!str2texture_mode_table.count(texture_mode)){
         return luaL_error(L, "texture mode %s is invalid", texture_mode);
     }
 
@@ -85,7 +98,7 @@ int new_texture_cube_lua(lua_State* L)
     *(texture_cube**)texture_cube_pp = new texture_cube(
         faces_name,
         str2image_mode_table.at(image_mode),
-        str2image_mode_table.at(texture_mode), str2texture_filter_table.at(min_filter),
+        str2texture_mode_table.at(texture_mode), str2texture_filter_table.at(min_filter),
         str2texture_filter_table.at(max_filter)
     );
     create_texture_cube_table(L);

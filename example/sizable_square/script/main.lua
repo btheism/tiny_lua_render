@@ -31,7 +31,10 @@ simple_fragment_shader_code = [[
     }
 ]]
 
-square.shader = shader.new_shader(simple_vertex_shader_code, simple_fragment_shader_code)
+square.shader = shader.new_shader({
+{"vertex" ,simple_vertex_shader_code},
+{"frag", simple_fragment_shader_code}
+})
 --根据https://stackoverflow.com/questions/42357380/why-must-i-use-a-shader-program-before-i-can-set-its-uniforms,修改uinform之前必须激活着色器(opengl的历史遗留问题?)
 square.shader:use()
 square.shader:set_int("Tex"..(0), 0)

@@ -8,12 +8,17 @@ class texture_2d{
 public:
     GLuint ID;
     texture_2d(const char* image_path, GLint image_mode, GLint texture_mode, GLint swrap, int twrap, GLint min_filter, GLint max_filter);
+    texture_2d(const texture_2d & mirror) = delete;
+    texture_2d(texture_2d && mirror){
+        ID=mirror.ID;
+        mirror.ID=0;
+    }
     ~texture_2d(void){
+        //opengl会忽略为0的id(如果texture被move的话),因此无需额外检查
         GL_CHECK(glDeleteTextures(1, &ID));
     }
     void active(int slot){
-        GL_CHECK(glActiveTexture(GL_TEXTURE0+slot));
-        GL_CHECK(glBindTexture(GL_TEXTURE_2D, ID));
+        GL_CHECK(glBindTextureUnit(slot, ID));//glActiveTexture需要做加法,glBindTextureUnit不需要
     }
 };
 
@@ -21,12 +26,16 @@ class texture_cube{
 public:
     GLuint ID;
     texture_cube(const char* image_path[], GLint image_mode, GLint texture_mode, GLint min_filter, GLint max_filter);
+    texture_cube(const texture_cube & mirror) = delete;
+    texture_cube(texture_cube && mirror){
+        ID=mirror.ID;
+        mirror.ID=0;
+    }
     ~texture_cube(void){
         GL_CHECK(glDeleteTextures(1, &ID));
     }
     void active(int slot){
-        GL_CHECK(glActiveTexture(GL_TEXTURE0+slot));
-        GL_CHECK(glBindTexture(GL_TEXTURE_CUBE_MAP, ID));
+        GL_CHECK(glBindTextureUnit(slot, ID));
     }
 };
 /*

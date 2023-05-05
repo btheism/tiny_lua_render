@@ -1,5 +1,5 @@
-//该文件用于测试VAO是否总是关联到前一个被绑定的VBO
-//得出结论:所有VAO的指针均关联到在VAO被解绑之前最后一个被绑定的VBO
+//该文件用于测试VAO如何被关联到VBO
+//得出结论:VAO的指针关联到创建指针时指针绑定的VBO
 //而EBO则关联到前一个被绑定的VAO
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -17,7 +17,7 @@ const char *vertexShaderSource = "#version 330 core\n"
     "layout (location = 1) in vec3 bPos;\n"
     "void main()\n"
     "{\n"
-    "   gl_Position = vec4((aPos + bPos).xyz, 1.0);\n"
+    "   gl_Position = vec4((aPos + bPos).xyz, 2.0)/2;\n"
     "}\0";
 const char *fragmentShaderSource = "#version 330 core\n"
     "out vec4 FragColor;\n"
@@ -124,21 +124,26 @@ int main()
     glGenBuffers(1, &VBO_B);
     glGenBuffers(1, &EBO);
 
-    glBindVertexArray(VAO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO_B);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(verticesB), verticesB, GL_STATIC_DRAW);
+
     glBindBuffer(GL_ARRAY_BUFFER, VBO_A);
     glBufferData(GL_ARRAY_BUFFER, sizeof(verticesA), verticesA, GL_STATIC_DRAW);
+
+    glBindVertexArray(VAO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO_A);
 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO_B);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(1);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
     glBindVertexArray(0);
-
 
     // uncomment this call to draw in wireframe polygons.
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);

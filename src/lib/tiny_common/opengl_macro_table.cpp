@@ -28,6 +28,10 @@ extern const std::unordered_map<GLint, const std::string> image_mode2str_table{
     {GL_RGBA, "rgba"}, {GL_RGB, "rgb"}
 };
 
+extern const std::unordered_map<const std::string, GLint, std::hash<std::string>> str2texture_mode_table{
+    {"rgb", GL_RGB8}, {"rgba", GL_RGBA8}
+};
+
 extern const std::unordered_map<GLint, int> image_mode_channel_table{
     {GL_RGB, 3}, {GL_RGBA, 4}
 };

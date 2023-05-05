@@ -8,6 +8,11 @@ const luaL_Reg tiny_window_func[] = {
     {"set_close_bit", set_close_bit},
     {"set_clear_color", set_clear_color},
     {"key_pressed", key_pressed},
+    {"en_dep", enable_depth},
+    {"dis_dep", disable_depth},
+    {"en_sten", enable_stencial},
+    {"dis_sten", disable_stencial},
+    //{"fb_status", check_framebuffer_status},
     {nullptr, nullptr}
 };
 

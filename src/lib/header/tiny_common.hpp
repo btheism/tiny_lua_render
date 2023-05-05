@@ -62,6 +62,7 @@ extern const std::unordered_map<const std::string, GLint, std::hash<std::string>
 extern const std::unordered_map<GLint, const std::string> texture_filter2str_table;
 
 extern const std::unordered_map<const std::string, GLint, std::hash<std::string>> str2image_mode_table;
+extern const std::unordered_map<const std::string, GLint, std::hash<std::string>> str2texture_mode_table;
 extern const std::unordered_map<GLint, const std::string> image_mode2str_table;
 extern const std::unordered_map<GLint, int> image_mode_channel_table;
 

@@ -15,10 +15,14 @@ public:
     GLenum type;
     GLsizei count;
     GLuint VAO;
-    GLuint VBO;
-    GLuint EBO;
+    bool have_ebo;
     mesh(GLenum type, GLsizei count, const std::vector<float>& vbo_data, const std::vector<VAO_par>& vaos);
     mesh(GLenum type, GLsizei count, const std::vector<float>& vbo_data, const std::vector<VAO_par>& vaos, const std::vector<unsigned int>& ebo_data);
+    mesh(const mesh & mirror) = delete;
+    mesh(mesh && mirror){
+        VAO = mirror.VAO;
+        mirror.VAO = 0;
+    }
     ~mesh(void);
     void draw(void);
 };

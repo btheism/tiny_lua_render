@@ -1,12 +1,11 @@
 #include<tiny_texture.hpp>
 
 texture_2d::texture_2d(const char* image_path, GLint image_mode, GLint texture_mode, GLint swrap, int twrap, GLint min_filter, GLint max_filter){
-    GL_CHECK(glGenTextures(1, &ID));
-    GL_CHECK(glBindTexture(GL_TEXTURE_2D, ID));
-    GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, swrap));
-    GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, twrap));
-    GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, min_filter));
-    GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, max_filter));
+    GL_CHECK(glCreateTextures(GL_TEXTURE_2D, 1, &ID));
+    GL_CHECK(glTextureParameteri(ID, GL_TEXTURE_WRAP_S, swrap));
+    GL_CHECK(glTextureParameteri(ID, GL_TEXTURE_WRAP_T, twrap));
+    GL_CHECK(glTextureParameteri(ID, GL_TEXTURE_MIN_FILTER, min_filter));
+    GL_CHECK(glTextureParameteri(ID, GL_TEXTURE_MAG_FILTER, max_filter));
     //image_8bit会自动释放内存
     image_8bit image(image_path, true);
 
@@ -17,8 +16,9 @@ texture_2d::texture_2d(const char* image_path, GLint image_mode, GLint texture_m
               image_mode_channel_table.at(image_mode)
         );
     };
-    GL_CHECK(glTexImage2D(GL_TEXTURE_2D, 0, texture_mode, image.width, image.height, 0, image_mode, GL_UNSIGNED_BYTE, image.content));
-    GL_CHECK(glGenerateMipmap(GL_TEXTURE_2D));
+    GL_CHECK(glTextureStorage2D(ID, 1 + std::floor(std::log2(std::max(image.width, image.height))), texture_mode, image.width, image.height));//glTextureStorage2D只接收带大小后缀的参数类型
+    GL_CHECK(glTextureSubImage2D(ID, 0, 0, 0, image.width, image.height, image_mode, GL_UNSIGNED_BYTE, image.content));
+    GL_CHECK(glGenerateTextureMipmap(ID));
 }
 
 //该函数应配合new_texture_2d使用,设置栈顶上的元素的元表为shader
@@ -53,7 +53,7 @@ int new_texture_2d_lua(lua_State* L)
     }
 
     const char* texture_mode = luaL_checkstring(L, 3);
-    if(!str2image_mode_table.count(texture_mode)){
+    if(!str2texture_mode_table.count(texture_mode)){
         return luaL_error(L, "texture mode %s is invalid", texture_mode);
     }
 
@@ -79,7 +79,7 @@ int new_texture_2d_lua(lua_State* L)
 
     //创建userdata并把原表填充到栈顶
     void* texture_2d_pp = lua_newuserdata(L, sizeof(void*));
-    *(texture_2d**)texture_2d_pp = new texture_2d(image_path, str2image_mode_table.at(image_mode), str2image_mode_table.at(texture_mode), str2texture_wrap_table.at(swrap), str2texture_wrap_table.at(twrap), str2texture_filter_table.at(min_filter), str2texture_filter_table.at(max_filter));
+    *(texture_2d**)texture_2d_pp = new texture_2d(image_path, str2image_mode_table.at(image_mode), str2texture_mode_table.at(texture_mode), str2texture_wrap_table.at(swrap), str2texture_wrap_table.at(twrap), str2texture_filter_table.at(min_filter), str2texture_filter_table.at(max_filter));
     create_texture_2d_table(L);
     return 1;
 }
