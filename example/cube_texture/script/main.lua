@@ -199,6 +199,7 @@ end
 function update(dt)
     camera:update()
     --box.rotate[1]=box.rotate[1]+dt*10
+    window.clear()
     draw(box)
     draw(wall)
     light:draw()

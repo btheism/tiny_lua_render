@@ -4,12 +4,11 @@ end
 
 square={}
 
-simple_vertex_shader_code = [[
+square_vertex_code = [[
     #version 330 core
     layout (location = 0) in vec2 LocPos;
     layout (location = 1) in vec2 inTexPos;
     out vec2 TexPos;
-    uniform float mix_factor;
     uniform float xpos;
     uniform float ypos;
     uniform float scale;
@@ -19,12 +18,11 @@ simple_vertex_shader_code = [[
        TexPos = inTexPos;
     }
 ]]
-simple_fragment_shader_code = [[
+square_frag_code = [[
     #version 330 core
     out vec4 FragColor;
     in vec2 TexPos;
     uniform sampler2D Tex0;
-    uniform float mix_factor;
     void main()
     {
         FragColor = texture(Tex0, TexPos);
@@ -32,8 +30,8 @@ simple_fragment_shader_code = [[
 ]]
 
 square.shader = shader.new_shader({
-{"vertex" ,simple_vertex_shader_code},
-{"frag", simple_fragment_shader_code}
+{"vertex" ,square_vertex_code},
+{"frag", square_frag_code}
 })
 --根据https://stackoverflow.com/questions/42357380/why-must-i-use-a-shader-program-before-i-can-set-its-uniforms,修改uinform之前必须激活着色器(opengl的历史遗留问题?)
 square.shader:use()

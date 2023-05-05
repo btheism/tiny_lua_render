@@ -1,4 +1,5 @@
 camera = require("script/camera")
+key_newly_pressed = require("script/key_newly_pressed")
 
 light={}
 box={}
@@ -71,23 +72,6 @@ function light:draw()
     self.shader:set_mat("modelM", linear.move_mat(self.pos)*linear.scale_mat(unpack(self.scale)))
     self.shader:set_vec("LightColor", self.color)
     self.mesh:draw()
-end
-
-last_press={}
-function key_newly_pressed(key_name)
-    if(window.key_pressed(key_name))
-    then
-        if(not last_press[key_name]==true)
-        then
-            last_press[key_name]=true
-            return true
-        else
-            return false
-        end
-    else
-        last_press[key_name]=false
-        return false
-    end
 end
 
 function process_input()
@@ -192,6 +176,7 @@ end
 function update(dt)
     camera:update()
     box.rotate[1]=box.rotate[1]+dt*10
+    window.clear()
     draw(box)
     draw(floor)
     light:draw()

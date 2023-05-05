@@ -101,11 +101,10 @@ int clear(lua_State *L){
     return 0;
 }
 
+//用户需要自行调用clear
 int fresh(lua_State *L){
     glfwSwapBuffers(window);
     glfwPollEvents();
-    //注意清除缓冲位
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     return 0;
 }
 
@@ -133,10 +132,20 @@ int enable_stencial(lua_State *L){
     GL_CHECK(glEnable(GL_STENCIL_TEST));
     return 0;
 }
+
 int disable_stencial(lua_State *L){
     GL_CHECK(glDisable(GL_STENCIL_TEST));
     return 0;
 }
+
+int reset_framebuffer_lua(lua_State* L){
+    int width, height;
+    glfwGetWindowSize(window, &width, &height);
+    GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, 0));
+    GL_CHECK(glViewport(0, 0, width, height));
+    return 0;
+}
+
 /*
 int check_framebuffer_status(lua_State *L){
     GLuint fb_code;

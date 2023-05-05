@@ -17,7 +17,7 @@ public:
         //opengl会忽略为0的id(如果texture被move的话),因此无需额外检查
         GL_CHECK(glDeleteTextures(1, &ID));
     }
-    void active(int slot){
+    void active(GLuint slot){
         GL_CHECK(glBindTextureUnit(slot, ID));//glActiveTexture需要做加法,glBindTextureUnit不需要
     }
 };

@@ -12,6 +12,7 @@ const luaL_Reg tiny_window_func[] = {
     {"dis_dep", disable_depth},
     {"en_sten", enable_stencial},
     {"dis_sten", disable_stencial},
+    {"reset_fb", reset_framebuffer_lua},
     //{"fb_status", check_framebuffer_status},
     {nullptr, nullptr}
 };

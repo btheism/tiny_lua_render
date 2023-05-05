@@ -17,7 +17,9 @@ int enable_depth(lua_State *L);
 int disable_depth(lua_State *L);
 int enable_stencial(lua_State *L);
 int disable_stencial(lua_State *L);
+int reset_framebuffer_lua(lua_State *L);
 //int check_framebuffer_status(lua_State *L);
+
 void luaopen_tiny_windowlib(lua_State *L);
 
 #endif

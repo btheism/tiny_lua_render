@@ -10,7 +10,11 @@ void luaopen_tiny_framebufferlib(lua_State *L){
     luaL_newlib(L, tiny_texture_func);
     //为表命名并弹出表
     lua_setglobal(L, "framebuffer");
-    log("register tiny_texture to lua\n");
+    log("register tiny_framebuffer to lua\n");
 };
 
+int reset_framebuffer_lua(lua_State* L){
+    GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, 0));
+    return 0;
+}
 

@@ -91,7 +91,7 @@ int delete_texture_2d_lua(lua_State* L){
 
 int active_texture_2d_lua(lua_State* L){
     texture_2d* current_texture =  *(texture_2d**)(luaL_checkudata(L, 1, "texture_2d"));
-    int slot = luaL_checkinteger(L, 2);
+    GLuint slot = luaL_checkinteger(L, 2);
     current_texture->active(slot);
     return 0;
 }
