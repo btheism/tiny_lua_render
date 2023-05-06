@@ -3,12 +3,12 @@
 framebuffer_2d::framebuffer_2d(GLsizei width, GLsizei height):width(width),height(height){
     GL_CHECK(glCreateFramebuffers(1, &ID));
     GL_CHECK(glCreateTextures(GL_TEXTURE_2D ,1, &texture));
-    GL_CHECK(glTextureStorage2D(texture, 1, GL_RGBA8, width, height));
     GL_CHECK(glTextureParameteri(texture, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
     GL_CHECK(glTextureParameteri(texture, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
-
     GL_CHECK(glTextureParameteri(texture, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
     GL_CHECK(glTextureParameteri(texture, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
+    GL_CHECK(glTextureStorage2D(texture, 1, GL_RGBA8, width, height));
+
     GL_CHECK(glNamedFramebufferTexture(ID, GL_COLOR_ATTACHMENT0, texture, 0));
 
     //由于无需把深度和模版缓冲渲染出来,因此使用模版
@@ -21,7 +21,7 @@ framebuffer_2d::framebuffer_2d(GLsizei width, GLsizei height):width(width),heigh
 //该函数应配合new_framebuffer_2d使用,设置栈顶上的元素的元表为shader
 void create_framebuffer_2d_table(lua_State* L){
     //该函数可以避免元表被重复注册,并把元表放在栈顶
-    if(luaL_newmetatable(L, "framebuffer_2d")){
+    if(luaL_newmetatable(L, "fb_2d")){
         static const luaL_Reg functions[] =
         {
             {"__gc", delete_framebuffer_2d_lua},
@@ -55,18 +55,18 @@ int new_framebuffer_2d_lua(lua_State* L)
 }
 
 int delete_framebuffer_2d_lua(lua_State* L){
-    delete *(framebuffer_2d**)(luaL_checkudata(L, 1, "framebuffer_2d"));
+    delete *(framebuffer_2d**)(luaL_checkudata(L, 1, "fb_2d"));
     return 0;
 }
 
 int use_framebuffer_2d_lua(lua_State* L){
-    framebuffer_2d* current_framebuffer =  *(framebuffer_2d**)(luaL_checkudata(L, 1, "framebuffer_2d"));
+    framebuffer_2d* current_framebuffer =  *(framebuffer_2d**)(luaL_checkudata(L, 1, "fb_2d"));
     current_framebuffer->use();
     return 0;
 }
 
 int active_framebuffer_2d_texture_lua(lua_State* L){
-    framebuffer_2d* current_framebuffer =  *(framebuffer_2d**)(luaL_checkudata(L, 1, "framebuffer_2d"));
+    framebuffer_2d* current_framebuffer =  *(framebuffer_2d**)(luaL_checkudata(L, 1, "fb_2d"));
     GLuint slot = luaL_checkinteger(L, 2);
     current_framebuffer->active_texture(slot);
     return 0;

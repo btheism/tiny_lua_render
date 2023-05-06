@@ -2,6 +2,7 @@
 
 static const luaL_Reg tiny_texture_func[] = {
     {"new_2d", new_framebuffer_2d_lua},
+    {"new_depth_cube", new_framebuffer_depth_cube_lua},
     {nullptr, nullptr}
 };
 
