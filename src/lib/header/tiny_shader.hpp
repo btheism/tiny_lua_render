@@ -20,21 +20,27 @@ public:
     void use(){
         GL_CHECK(glUseProgram(ID));
     }
-    void setInt(const char* name, GLint value) const{
-        int uni_loc = glGetUniformLocation(ID, name);
+    GLint inline get_uniform_loc(const char* name) const{
+        GLint uni_loc = glGetUniformLocation(ID, name);
         if(uni_loc==-1){
             fatal("cannot find uniform %s in shader\n", name)
         }
+        return uni_loc;
+    }
+
+    void set_int(const char* name, GLint value) const{
         //使用了DSA函数以避免binding
-        GL_CHECK(glProgramUniform1i(ID, uni_loc, value));
+        GL_CHECK(glProgramUniform1i(ID, get_uniform_loc(name), value));
     }
-    void setFloat(const char* name, GLfloat value) const{
-        int uni_loc = glGetUniformLocation(ID, name);
-        if(uni_loc==-1){
-            fatal("cannot find uniform %s in shader\n", name)
-        }
-        GL_CHECK(glProgramUniform1f(ID, uni_loc, value));
+    void set_float(const char* name, GLfloat value) const{
+        GL_CHECK(glProgramUniform1f(ID, get_uniform_loc(name), value));
     }
+    void set_ints(const char* name, const std::vector<GLint>& values) const{
+        GL_CHECK(glProgramUniform1iv(ID, get_uniform_loc(name), values.size(), &(values[0])));
+    };
+    void set_floats(const char* name, const std::vector<GLfloat>& values) const{
+        GL_CHECK(glProgramUniform1fv(ID, get_uniform_loc(name), values.size(), &(values[0])));
+    };
     void setMat(const char* name, const matrix &mat, GLboolean transpose) const;
     void setVec(const char* name, const vector &vec) const;
 };
@@ -47,6 +53,8 @@ int delete_shader_lua(lua_State* L);
 int use_shader_lua(lua_State* L);
 int set_shader_int_lua(lua_State* L);
 int set_shader_float_lua(lua_State* L);
+int set_shader_ints_lua(lua_State* L);
+int set_shader_floats_lua(lua_State* L);
 int set_shader_mat_lua(lua_State* L);
 int set_shader_vec_lua(lua_State* L);
 

@@ -27,19 +27,8 @@ square_frag_code = [[
         FragColor = texture(Tex0, TexPos);
     }
 ]]
-
-screen_vertex_code = [[
-    #version 330 core
-    layout (location = 0) in vec2 LocPos;
-    layout (location = 1) in vec2 inTexPos;
-    out vec2 TexPos;
-    void main()
-    {
-       gl_Position = vec4(LocPos.x, LocPos.y, 0.0, 1.0);
-       TexPos = inTexPos;
-    }
-]]
-
+--[[
+--变换颜色
 screen_frag_code = [[
     #version 330 core
     out vec4 FragColor;
@@ -62,6 +51,9 @@ screen_frag_code = [[
 
     }
 ]]
+--]]
+
+
 
 square.shader = shader.new_shader({
 {"vertex" ,square_vertex_code},
@@ -72,7 +64,7 @@ square.shader = shader.new_shader({
 square.shader:set_int("Tex"..(0), 0)
 
 --{图像格式,纹理格式,图像的swrap,twrap,图像的min过滤器,图像的max过滤器}
-square.tex = texture.new_texture_2d("image/yuri.jpg", "rgb", "rgba", "repeat", "repeat", "nearest", "nearest")
+square.tex = texture.new_texture_2d("image/sakura_tomoyo.jpg", "rgb", "rgba", "repeat", "repeat", "nearest", "nearest")
 
 square.mesh = mesh.new_mesh(
     "triangles",
@@ -94,12 +86,29 @@ square.mesh = mesh.new_mesh(
     }
     )
 
+kernels={
+    blur=
+        {1.0/16, 2.0/16, 1.0/16,
+        2.0/16, 4.0/16, 2.0/16,
+        1.0/16, 2.0/16, 1.0/16},
+    --sharpen与edge的区别在于sharpen叠加了像素自身的颜色与edge的值
+    sharpen=
+        {-1, -1, -1,
+        -1,  9, -1,
+        -1, -1, -1},
+    edge=
+        {1, 1, 1,
+        1, -8, 1,
+        1, 1, 1},
+
+}
+
 screen={}
 
-screen.shader = shader.new_shader({
-{"vertex" ,screen_vertex_code},
-{"frag", screen_frag_code}
-})
+screen.shader = require("shader/filter_kernel")
+screen.shader:set_float("offset", 1.0/450)
+screen.shader:set_floats("kernel", 9, kernels.edge)
+
 
 --根据https://stackoverflow.com/questions/42357380/why-must-i-use-a-shader-program-before-i-can-set-its-uniforms,修改uinform之前必须激活着色器(opengl的历史遗留问题?)(后来在库中使用了4.5引入的DSA接口,现在不需要了)
 screen.shader:set_int("Tex"..(0), 0)

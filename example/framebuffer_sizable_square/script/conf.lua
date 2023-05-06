@@ -1,4 +1,4 @@
 title = "square"
-width = 1400
+width = 1892
 height = 1200
 icon = "image/yuri_s.jpg"

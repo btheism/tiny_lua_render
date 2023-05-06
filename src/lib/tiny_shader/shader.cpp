@@ -90,26 +90,17 @@ static const std::unordered_map<int, void(**)(GLuint, GLint, GLsizei, GLboolean,
 };
 
 void shader::setMat(const char* name, const matrix &mat, GLboolean transpose) const{
-    int uni_loc = glGetUniformLocation(ID, name);
-    if(uni_loc==-1){
-        fatal("cannot find uniform %s in shader\n", name)
-    }
-
     if(!setmat_func_table.count((mat.col<<4)+mat.row)){
         fatal("do not support set matrix of size (%zu, %zu) in shader\n", mat.col, mat.row)
     }
-    GL_CHECK((**setmat_func_table.at((mat.col<<4)+mat.row))(ID, uni_loc, 1, transpose, mat.content));
+    GL_CHECK((**setmat_func_table.at((mat.col<<4)+mat.row))(ID, get_uniform_loc(name), 1, transpose, mat.content));
 }
 
 void shader::setVec(const char* name, const vector &vec) const{
-    int uni_loc = glGetUniformLocation(ID, name);
-    if(uni_loc==-1){
-        fatal("cannot find uniform %s in shader\n", name)
-    }
     if(!setvec_func_table.count(vec.size)){
         fatal("do not support set vector of size %zu in shader\n", vec.size)
     }
-    GL_CHECK((**setvec_func_table.at(vec.size))(ID, uni_loc, 1, vec.content));
+    GL_CHECK((**setvec_func_table.at(vec.size))(ID, get_uniform_loc(name), 1, vec.content));
 }
 
 //该函数应配合new_shader使用,设置栈顶上的元素的元表为shader
@@ -122,7 +113,9 @@ void create_shader_table(lua_State* L){
             {"__gc", delete_shader_lua},
             {"use", use_shader_lua},
             {"set_int", set_shader_int_lua},
+            {"set_ints", set_shader_ints_lua},
             {"set_float", set_shader_float_lua},
+            {"set_floats", set_shader_floats_lua},
             {"set_mat", set_shader_mat_lua},
             {"set_vec", set_shader_vec_lua},
             {nullptr, nullptr}
@@ -185,7 +178,27 @@ int set_shader_int_lua(lua_State* L){
     shader* current_shader = *(shader**)(luaL_checkudata(L, 1, "shader"));
     const char* name = luaL_checkstring(L, 2);
     GLint value = luaL_checkinteger(L, 3);
-    current_shader->setInt(name, value);
+    current_shader->set_int(name, value);
+    return 0;
+}
+
+int set_shader_ints_lua(lua_State* L){
+    shader* current_shader = *(shader**)(luaL_checkudata(L, 1, "shader"));
+    const char* name = luaL_checkstring(L, 2);
+    int exp_num = luaL_checkinteger(L, 3);
+    luaL_checktype(L, 4, LUA_TTABLE);
+    int recvd_num = lua_objlen(L, 4);
+    if(recvd_num!=exp_num){
+        return luaL_error(L, "expected %d ints, but got %d", exp_num, recvd_num);
+    }
+    std::vector<GLint> pars(exp_num);
+    for(size_t i=1; i<=exp_num; i++){
+        lua_pushinteger(L, i);
+        lua_gettable(L, 4);
+        pars[i-1]=  luaL_checkinteger(L, -1);
+        lua_pop(L, 1);
+    }
+    current_shader->set_ints(name ,pars);
     return 0;
 }
 
@@ -193,7 +206,27 @@ int set_shader_float_lua(lua_State* L){
     shader* current_shader = *(shader**)(luaL_checkudata(L, 1, "shader"));
     const char* name = luaL_checkstring(L, 2);
     GLfloat value = luaL_checknumber(L, 3);
-    current_shader->setFloat(name, value);
+    current_shader->set_float(name, value);
+    return 0;
+}
+
+int set_shader_floats_lua(lua_State* L){
+    shader* current_shader = *(shader**)(luaL_checkudata(L, 1, "shader"));
+    const char* name = luaL_checkstring(L, 2);
+    int exp_num = luaL_checkinteger(L, 3);
+    luaL_checktype(L, 4, LUA_TTABLE);
+    int recvd_num = lua_objlen(L, 4);
+    if(recvd_num!=exp_num){
+        return luaL_error(L, "expected %d floats, but got %d", exp_num, recvd_num);
+    }
+    std::vector<GLfloat> pars(exp_num);
+    for(size_t i=1; i<=exp_num; i++){
+        lua_pushinteger(L, i);
+        lua_gettable(L, 4);
+        pars[i-1]=  luaL_checknumber(L, -1);
+        lua_pop(L, 1);
+    }
+    current_shader->set_floats(name ,pars);
     return 0;
 }
 

@@ -4,6 +4,9 @@ framebuffer_2d::framebuffer_2d(GLsizei width, GLsizei height):width(width),heigh
     GL_CHECK(glCreateFramebuffers(1, &ID));
     GL_CHECK(glCreateTextures(GL_TEXTURE_2D ,1, &texture));
     GL_CHECK(glTextureStorage2D(texture, 1, GL_RGBA8, width, height));
+    GL_CHECK(glTextureParameteri(texture, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
+    GL_CHECK(glTextureParameteri(texture, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
+
     GL_CHECK(glTextureParameteri(texture, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
     GL_CHECK(glTextureParameteri(texture, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
     GL_CHECK(glNamedFramebufferTexture(ID, GL_COLOR_ATTACHMENT0, texture, 0));
