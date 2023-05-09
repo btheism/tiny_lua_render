@@ -1,11 +1,18 @@
+shadow_fb = framebuffer.new_depth_cube(1200)
+shadow_fb:active(7)
+shadow_shader_table = require("script/point_shadow_shader")
+shadow_shader = shadow_shader_table[1]
+update_shadow_shader = shadow_shader_table[2]
+
+
 light={}
 box={}
 wall={}
 
 actobj=box
 
-box.shader = require("script/cube_tex_object_shader")
-wall.shader = require("script/2d_tex_object_shader")
+box.shader = require("script/shadowed_cube_tex_object_shader")
+wall.shader = require("script/shadowed_2d_tex_object_shader")
 light.shader = require("script/light_shader")
 
 box.mesh = require("script/cube_mesh")
@@ -23,19 +30,11 @@ light.pos = linear.new_vec(3, {3,3,-3})
 
 box.tex = texture.new_texture_cube(
 {
---[[
 front="image/genshin/traveler_male.jpg",
 back="image/genshin/traveler_female.jpg",
 up="image/genshin/klee.jpg",
 down="image/genshin/qiqi.jpg",
 left="image/genshin/jean.jpg",
-right="image/genshin/keqing.jpg",
---]]
-front="image/genshin/keqing.jpg",
-back="image/genshin/keqing.jpg",
-up="image/genshin/keqing.jpg",
-down="image/genshin/keqing.jpg",
-left="image/genshin/keqing.jpg",
 right="image/genshin/keqing.jpg",
 }
 ,"rgb", "rgba", "linear", "linear")
@@ -79,6 +78,16 @@ function draw(object)
     object.tex:active(0)
     object.mesh:draw()
 end
+
+function draw_shadow(object)
+    local modelM =
+    linear.move_mat(object.pos)*
+    linear.rotate_mat(unpack(object.rotate))*
+    linear.scale_mat(unpack(object.scale))
+    shadow_shader:set_mat("modelM", modelM)
+    object.mesh:draw()
+end
+
 
 function light:draw()
     self.shader:use()
@@ -205,9 +214,15 @@ function process_input()
 end
 
 function update(dt)
-    camera:update()
-    --box.rotate[1]=box.rotate[1]+dt*10
+    box.rotate[1]=box.rotate[1]+dt*10
+    shadow_fb:use()
+    shadow_shader:use()
     window.clear()
+    update_shadow_shader(shadow_shader, light.pos)
+    draw_shadow(box)
+    window.reset_fb()
+    window.clear()
+    camera:update()
     draw(box)
     draw(wall)
     light:draw()

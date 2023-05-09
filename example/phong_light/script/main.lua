@@ -20,7 +20,7 @@ box.specularstrength=0.5
 box.spec_step=0.05
 
 box.pos = linear.new_vec(3, {0,0,0})
-box.rotate = {math.rad(45),linear.new_vec(3, {1,0,0})}
+box.rotate = {math.rad(0),linear.new_vec(3, {1,0,0})}
 box.scale = {1.0}
 
 
@@ -175,7 +175,7 @@ end
 
 function update(dt)
     camera:update()
-    box.rotate[1]=box.rotate[1]+dt*10
+    --box.rotate[1]=box.rotate[1]+dt*10
     window.clear()
     draw(box)
     draw(floor)

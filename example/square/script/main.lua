@@ -1,27 +1,5 @@
-function sleep(n)
-  os.execute("sleep " .. tonumber(n))
-end
-
 square={}
-
-simple_vertex_shader_code = [[
-    #version 330 core
-    layout (location = 0) in vec3 aPos;
-    void main()
-    {
-       gl_Position = vec4(aPos.x, aPos.y, 0.0, 1.0);
-    }
-]]
-simple_fragment_shader_code = [[
-    #version 330 core
-    out vec4 FragColor;
-    void main()
-    {
-        FragColor = vec4(1.0f, 0.0f, 0.0f, 1.0f);
-    }
-]]
-
-square.shader = shader.new_shader(simple_vertex_shader_code, simple_fragment_shader_code)
+square.shader = require("shader/simple_2d_shader")
 square.mesh = mesh.new_mesh(
     "triangles",
     6,
@@ -39,7 +17,6 @@ square.mesh = mesh.new_mesh(
     0,2,3
     }
     )
-
 
 function square.draw()
     square.shader:use()
@@ -69,10 +46,6 @@ function update(dt)
     window.set_clear_color(red, green, blue, 1)
     window.clear()
     square.draw()
-end
-
-function sleep(n)
-  os.execute("sleep " .. tonumber(n))
 end
 
 last_time = os.clock()

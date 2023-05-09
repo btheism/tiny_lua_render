@@ -37,7 +37,9 @@ extern const std::unordered_map<GLint, int> image_mode_channel_table{
 };
 
 extern const std::unordered_map<const std::string, GLenum, std::hash<std::string>> str2gl_primitive_table{
-    {"points", GL_POINTS}, {"triangles", GL_TRIANGLES}, {"lines", GL_LINES}
+    {"points", GL_POINTS},
+    {"lines", GL_LINES}, {"line_strip", GL_LINE_STRIP}, {"line_loop", GL_LINE_LOOP},
+    {"triangles", GL_TRIANGLES}, {"triangle_strip", GL_TRIANGLE_STRIP}, {"triangle_fan", GL_TRIANGLE_FAN},
 };
 
 

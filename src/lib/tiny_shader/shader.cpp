@@ -89,14 +89,14 @@ static const std::unordered_map<int, void(**)(GLuint, GLint, GLsizei, GLboolean,
     {0x43, &glProgramUniformMatrix4x3fv}
 };
 
-void shader::setMat(const char* name, const matrix &mat, GLboolean transpose) const{
+void shader::set_mat(const char* name, const matrix &mat, GLboolean transpose) const{
     if(!setmat_func_table.count((mat.col<<4)+mat.row)){
         fatal("do not support set matrix of size (%zu, %zu) in shader\n", mat.col, mat.row)
     }
     GL_CHECK((**setmat_func_table.at((mat.col<<4)+mat.row))(ID, get_uniform_loc(name), 1, transpose, mat.content));
 }
 
-void shader::setVec(const char* name, const vector &vec) const{
+void shader::set_vec(const char* name, const vector &vec) const{
     if(!setvec_func_table.count(vec.size)){
         fatal("do not support set vector of size %zu in shader\n", vec.size)
     }
@@ -241,7 +241,7 @@ int set_shader_mat_lua(lua_State* L){
         transpose = lua_toboolean(L, 4);
     }
     //log("set mat from lua\n")
-    current_shader->setMat(name, *mat, transpose);
+    current_shader->set_mat(name, *mat, transpose);
     return 0;
 }
 
@@ -251,6 +251,7 @@ int set_shader_vec_lua(lua_State* L){
     const char* name = luaL_checkstring(L, 2);
     vector* vec = *(vector**)(luaL_checkudata(L, 3, "vec"));
     GLboolean transpose = false;
-    current_shader->setVec(name, *vec);
+    current_shader->set_vec(name, *vec);
     return 0;
 }
+

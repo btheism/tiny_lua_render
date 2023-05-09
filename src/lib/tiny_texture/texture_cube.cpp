@@ -12,9 +12,7 @@ texture_cube::texture_cube(const char* image_path[], GLint image_mode, GLint tex
 
     //image_8bit会自动释放内存
     for(int img_serial=0; img_serial<6; img_serial++){
-
-        //很奇怪,立方体贴图的纵坐标似乎不该反转
-        image_8bit image(image_path[img_serial], false);
+        image_8bit image(image_path[img_serial], true);
         if(image.channel!=image_mode_channel_table.at(image_mode)){
             fatal("image has %d channels, but image mode %s expects %d channels\n",
                 image.channel,

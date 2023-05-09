@@ -41,8 +41,8 @@ public:
     void set_floats(const char* name, const std::vector<GLfloat>& values) const{
         GL_CHECK(glProgramUniform1fv(ID, get_uniform_loc(name), values.size(), &(values[0])));
     };
-    void setMat(const char* name, const matrix &mat, GLboolean transpose) const;
-    void setVec(const char* name, const vector &vec) const;
+    void set_mat(const char* name, const matrix &mat, GLboolean transpose) const;
+    void set_vec(const char* name, const vector &vec) const;
 };
 
 //shader* shader_from_file(const char* vertex_shader_path, const char* fragment_shader_path);

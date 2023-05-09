@@ -19,7 +19,7 @@ framebuffer_depth_cube::framebuffer_depth_cube(GLsizei len):len(len){
 //该函数应配合new_framebuffer_depth_cube使用,设置栈顶上的元素的元表为shader
 void create_framebuffer_depth_cube_table(lua_State* L){
     //该函数可以避免元表被重复注册,并把元表放在栈顶
-    if(luaL_newmetatable(L, "fb_cube")){
+    if(luaL_newmetatable(L, "depth_cube")){
         static const luaL_Reg functions[] =
         {
             {"__gc", delete_framebuffer_depth_cube_lua},
@@ -52,18 +52,18 @@ int new_framebuffer_depth_cube_lua(lua_State* L)
 }
 
 int delete_framebuffer_depth_cube_lua(lua_State* L){
-    delete *(framebuffer_depth_cube**)(luaL_checkudata(L, 1, "fb_cube"));
+    delete *(framebuffer_depth_cube**)(luaL_checkudata(L, 1, "depth_cube"));
     return 0;
 }
 
 int use_framebuffer_depth_cube_lua(lua_State* L){
-    framebuffer_depth_cube* current_framebuffer =  *(framebuffer_depth_cube**)(luaL_checkudata(L, 1, "fb_cube"));
+    framebuffer_depth_cube* current_framebuffer =  *(framebuffer_depth_cube**)(luaL_checkudata(L, 1, "depth_cube"));
     current_framebuffer->use();
     return 0;
 }
 
 int active_framebuffer_depth_cube_texture_lua(lua_State* L){
-    framebuffer_depth_cube* current_framebuffer =  *(framebuffer_depth_cube**)(luaL_checkudata(L, 1, "fb_cube"));
+    framebuffer_depth_cube* current_framebuffer =  *(framebuffer_depth_cube**)(luaL_checkudata(L, 1, "depth_cube"));
     GLuint slot = luaL_checkinteger(L, 2);
     current_framebuffer->active_texture(slot);
     return 0;

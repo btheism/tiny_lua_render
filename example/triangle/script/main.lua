@@ -4,25 +4,8 @@ end
 
 triangle={}
 
-simple_vertex_shader_code = [[
-    #version 330 core
-    layout (location = 0) in vec3 aPos;
-    void main()
-    {
-       gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);
-    }
-]]
-simple_fragment_shader_code = [[
-    #version 330 core
-    out vec4 FragColor;
-    void main()
-    {
-        FragColor = vec4(1.0f, 0.0f, 0.0f, 1.0f);
-    }
-]]
-
+triangle.shader = require("shader/simple_2d_shader"))
 --顶点属性指针:{序号, 每次读取的坐标数量, 间隔, 首项的偏置}
-triangle.shader = shader.new_shader(simple_vertex_shader_code, simple_fragment_shader_code)
 triangle.mesh = mesh.new_mesh(
     "triangles",
     3,
